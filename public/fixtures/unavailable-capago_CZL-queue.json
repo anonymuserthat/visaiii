@@ -1,0 +1,9 @@
+{
+  "choose_appointment_date": false,
+  "unavailable_day_list": [],
+  "queue_condition_list": [
+    "Je confirme l'exactitude des donnees saisies pour Constantine.",
+    "Je comprends que le centre peut placer le dossier en attente sans date immediate.",
+    "Je finaliserai la verification reCAPTCHA manuellement sur une surface officielle."
+  ]
+}

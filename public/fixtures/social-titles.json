@@ -1,0 +1,7 @@
+{
+  "social_title_category_list": [
+    { "social_title_id": "mr", "label": "Monsieur", "short_label": "M." },
+    { "social_title_id": "mrs", "label": "Madame", "short_label": "Mme" },
+    { "social_title_id": "miss", "label": "Mademoiselle", "short_label": "Mlle" }
+  ]
+}

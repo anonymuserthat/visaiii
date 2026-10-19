@@ -1,0 +1,50 @@
+{
+  "visa_type_list": [
+    {
+      "visa_type_id": "czl_short_business",
+      "visa_type_label": "Court sejour affaires",
+      "visa_stay_duration_id": "short_stay",
+      "visa_stay_duration_label": "Court sejour",
+      "product_line_id": "business",
+      "product_line_label": "Affaires",
+      "travel_project_relative_url": "/business-short-stay",
+      "legacy_renewal_supported": true,
+      "visa_file_variation_required": true,
+      "visa_variation_list": [
+        {
+          "visa_variation_id": "business_express",
+          "label": "Mission courte",
+          "validation_checklist_list": [
+            {
+              "validation_checklist_id": "business_letter",
+              "label": "Check-list lettre d'invitation"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "visa_type_id": "czl_short_tourism",
+      "visa_type_label": "Court sejour tourisme",
+      "visa_stay_duration_id": "short_stay",
+      "visa_stay_duration_label": "Court sejour",
+      "product_line_id": "tourism",
+      "product_line_label": "Tourisme",
+      "travel_project_relative_url": "/tourism-short-stay",
+      "legacy_renewal_supported": true,
+      "visa_file_variation_required": true,
+      "visa_variation_list": [
+        {
+          "visa_variation_id": "tourism_standard",
+          "label": "Tourisme classique",
+          "validation_checklist_list": [
+            {
+              "validation_checklist_id": "tourism_standard_czl",
+              "label": "Check-list tourisme Constantine"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

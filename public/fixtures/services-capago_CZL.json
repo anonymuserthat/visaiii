@@ -1,0 +1,44 @@
+{
+  "service_item_list": [
+    {
+      "service_id": "portrait",
+      "service_code": "portrait",
+      "service_label": "Photo conforme",
+      "description": "Prise photo au centre",
+      "price": 7,
+      "currency_code": "EUR",
+      "included_in_premium": true,
+      "formulas": ["standard", "premium"]
+    },
+    {
+      "service_id": "delivery",
+      "service_code": "home_delivery",
+      "service_label": "Livraison",
+      "description": "Acheminement du passeport",
+      "price": 11,
+      "currency_code": "EUR",
+      "included_in_premium": true,
+      "formulas": ["standard", "premium"]
+    },
+    {
+      "service_id": "sms",
+      "service_code": "follow_sms",
+      "service_label": "Suivi SMS",
+      "description": "Alertes de progression",
+      "price": 3,
+      "currency_code": "EUR",
+      "included_in_premium": true,
+      "formulas": ["standard", "premium"]
+    },
+    {
+      "service_id": "invoice",
+      "service_code": "invoice_email",
+      "service_label": "Facture",
+      "description": "Coordonnees de facturation",
+      "price": 0,
+      "currency_code": "EUR",
+      "included_in_premium": false,
+      "formulas": ["standard", "premium"]
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model VisaRequestRecord {
+  id                    String  @id
+  submittedAt           String  @map("submitted_at")
+  submitterName         String  @default("") @map("submitter_name")
+  submitterEmail        String  @default("") @map("submitter_email")
+  centerId              String  @map("center_id")
+  centerLabel           String  @map("center_label")
+  formula               String
+  travellerCount        Int     @map("traveller_count")
+  primaryTravellerName  String  @map("primary_traveller_name")
+  primaryTravellerEmail String  @map("primary_traveller_email")
+  primaryTravellerPhone String  @map("primary_traveller_phone")
+  appointmentDate       String? @map("appointment_date")
+  appointmentTime       String? @map("appointment_time")
+  statusCode            Int     @map("status_code")
+  confirmationLocation  String? @map("confirmation_location")
+  encodedPayload        String  @map("encoded_payload")
+  bookingSnapshot       Json    @map("booking_snapshot")
+  dismissedReminderAt   String? @map("dismissed_reminder_at")
+
+  @@map("visa_request_records")
+  @@index([submittedAt], map: "visa_request_records_submitted_at_idx")
+  @@index([centerId], map: "visa_request_records_center_id_idx")
+}

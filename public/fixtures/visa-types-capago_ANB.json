@@ -1,0 +1,64 @@
+{
+  "visa_type_list": [
+    {
+      "visa_type_id": "anb_short_tourism_single",
+      "visa_type_label": "Court sejour tourisme",
+      "visa_stay_duration_id": "short_stay",
+      "visa_stay_duration_label": "Court sejour",
+      "product_line_id": "tourism",
+      "product_line_label": "Tourisme",
+      "travel_project_relative_url": "/tourism-short-stay",
+      "legacy_renewal_supported": true,
+      "visa_file_variation_required": true,
+      "visa_variation_list": [
+        {
+          "visa_variation_id": "single_entry",
+          "label": "Entree unique",
+          "validation_checklist_list": [
+            {
+              "validation_checklist_id": "tourism_standard",
+              "label": "Check-list tourisme standard"
+            },
+            {
+              "validation_checklist_id": "tourism_fast_track",
+              "label": "Check-list tourisme prioritaire"
+            }
+          ]
+        },
+        {
+          "visa_variation_id": "multiple_entry",
+          "label": "Entrees multiples",
+          "validation_checklist_list": [
+            {
+              "validation_checklist_id": "tourism_multiple",
+              "label": "Check-list entrees multiples"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "visa_type_id": "anb_long_family",
+      "visa_type_label": "Long sejour famille",
+      "visa_stay_duration_id": "long_stay",
+      "visa_stay_duration_label": "Long sejour",
+      "product_line_id": "family",
+      "product_line_label": "Regroupement familial",
+      "travel_project_relative_url": "/family-long-stay",
+      "legacy_renewal_supported": false,
+      "visa_file_variation_required": true,
+      "visa_variation_list": [
+        {
+          "visa_variation_id": "family_main",
+          "label": "Conjoint / enfant",
+          "validation_checklist_list": [
+            {
+              "validation_checklist_id": "family_core",
+              "label": "Check-list famille"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

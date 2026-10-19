@@ -1,0 +1,14 @@
+{
+  "visa_file_variation_category_list": [
+    {
+      "visa_file_variation_id": "primo_demand",
+      "label": "Premiere demande",
+      "description": "Valeur par defaut si aucune variation n'est choisie."
+    },
+    {
+      "visa_file_variation_id": "renewal",
+      "label": "Renouvellement",
+      "description": "Utiliser pour un dossier deja depose auparavant."
+    }
+  ]
+}

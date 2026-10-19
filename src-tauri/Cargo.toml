@@ -1,0 +1,42 @@
+[package]
+name = "damander_visa"
+version = "0.2.0"
+description = "Damander Visa desktop assistant"
+authors = ["Codex"]
+license = "MIT"
+repository = ""
+edition = "2021"
+rust-version = "1.77.2"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+name = "damander_visa_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2.5.6", features = [] }
+dotenvy = "0.15"
+
+[dependencies]
+base64 = "0.22"
+rand = "0.8"
+sha2 = "0.10"
+tokio = { version = "1", features = ["time", "sync"] }
+chrono = { version = "0.4", features = ["serde"] }
+dotenvy = "0.15"
+native-tls = "0.2"
+postgres = { version = "0.19", features = ["with-serde_json-1"] }
+postgres-native-tls = "0.5"
+reqwest = { version = "0.12", features = ["json", "cookies", "gzip", "brotli", "deflate", "rustls-tls"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+log = "0.4"
+tauri = { version = "2.10.3", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-log = "2"
+tauri-plugin-opener = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_Foundation", "Win32_Security_Cryptography"] }

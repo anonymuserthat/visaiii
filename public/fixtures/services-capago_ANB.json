@@ -1,0 +1,54 @@
+{
+  "service_item_list": [
+    {
+      "service_id": "portrait",
+      "service_code": "portrait",
+      "service_label": "Photo conforme",
+      "description": "Photo d'identite aux normes visas",
+      "price": 8,
+      "currency_code": "EUR",
+      "included_in_premium": true,
+      "formulas": ["standard", "premium"]
+    },
+    {
+      "service_id": "delivery",
+      "service_code": "home_delivery",
+      "service_label": "Livraison a domicile",
+      "description": "Reception securisee du passeport",
+      "price": 12,
+      "currency_code": "EUR",
+      "included_in_premium": true,
+      "formulas": ["standard", "premium"]
+    },
+    {
+      "service_id": "sms",
+      "service_code": "follow_sms",
+      "service_label": "Suivi SMS",
+      "description": "Notifications etapes dossier",
+      "price": 3,
+      "currency_code": "EUR",
+      "included_in_premium": true,
+      "formulas": ["standard", "premium"]
+    },
+    {
+      "service_id": "insurance",
+      "service_code": "relation",
+      "service_label": "Rappel assurance",
+      "description": "Mise en relation assurance voyage",
+      "price": 0,
+      "currency_code": "EUR",
+      "included_in_premium": false,
+      "formulas": ["standard", "premium"]
+    },
+    {
+      "service_id": "invoice",
+      "service_code": "invoice_email",
+      "service_label": "Facture entreprise",
+      "description": "Emission d'une facture email",
+      "price": 0,
+      "currency_code": "EUR",
+      "included_in_premium": false,
+      "formulas": ["standard", "premium"]
+    }
+  ]
+}

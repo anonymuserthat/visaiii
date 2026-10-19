@@ -1,0 +1,30 @@
+{
+  "session_id": "fixture-session-20260326",
+  "currency_code": "EUR",
+  "terms_and_conditions_url": "https://visa-fr-dz.capago.eu/rendezvous_annaba",
+  "max_travellers_per_group": 6,
+  "phone_number_format": "^(0|\\+213)[0-9]{9}$",
+  "premium_includes_home_delivery": true,
+  "premium_includes_photo": true,
+  "premium_includes_sms": true,
+  "capago_center_list": [
+    {
+      "capago_center_id": "capago_ANB",
+      "label": "Annaba",
+      "city": "Annaba",
+      "country": "Algerie",
+      "image_url": null,
+      "premium_headline": "Salon premium Annaba",
+      "premium_description": "Photo, SMS et livraison a domicile selon disponibilite locale."
+    },
+    {
+      "capago_center_id": "capago_CZL",
+      "label": "Constantine",
+      "city": "Constantine",
+      "country": "Algerie",
+      "image_url": null,
+      "premium_headline": "Accompagnement premium Constantine",
+      "premium_description": "Meme endpoint de booking, jeux de donnees differents par centre."
+    }
+  ]
+}
