@@ -88,13 +88,7 @@ function getSelectedAppointmentTimeLabel(values: BookingFormValues) {
   return matchedSlot?.label ?? formatStoredSlotValue(values.appointment.time)
 }
 
-function ReviewRow({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
+function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-1 sm:grid-cols-[104px_minmax(0,1fr)] sm:gap-3">
       <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
@@ -115,7 +109,7 @@ function ReviewSection({
   children: ReactNode
 }) {
   return (
-    <section className="space-y-3 rounded-xl bg-slate-50/70 p-3">
+    <section className="review-section">
       <div className="flex items-center gap-2">
         <Badge variant="outline" className="px-2 py-0 text-[11px]">
           {badge}
@@ -143,27 +137,27 @@ export function SummaryPanel({
     currentStep === 4 &&
     Boolean(
       values.appointment.date ||
-        values.appointment.dateSubmit ||
-        values.appointment.time ||
-        values.appointment.captchaToken,
+      values.appointment.dateSubmit ||
+      values.appointment.time ||
+      values.appointment.captchaToken,
     )
 
   const serviceReviewRows = [
     values.optionalServices.portrait === 'yes_portrait'
       ? { label: 'Photos', value: 'Realisees au centre' }
       : values.optionalServices.portrait === 'no_portrait'
-      ? { label: 'Photos', value: 'Photos personnelles' }
-      : null,
+        ? { label: 'Photos', value: 'Photos personnelles' }
+        : null,
     values.optionalServices.relation === 'yes_relation'
       ? { label: 'Assurance', value: 'Rappel demande' }
       : values.optionalServices.relation === 'no_relation'
-      ? { label: 'Assurance', value: 'Non souhaite' }
-      : null,
+        ? { label: 'Assurance', value: 'Non souhaite' }
+        : null,
     values.optionalServices.deliveryVisa === 'home_delivery'
       ? { label: 'Passeport', value: 'Livraison a domicile ou au travail' }
       : values.optionalServices.deliveryVisa === 'me_delivery'
-      ? { label: 'Passeport', value: 'Retrait au centre' }
-      : null,
+        ? { label: 'Passeport', value: 'Retrait au centre' }
+        : null,
     {
       label: 'Suivi SMS',
       value: values.optionalServices.followSms ? 'Active' : 'Non active',
@@ -180,26 +174,31 @@ export function SummaryPanel({
   return (
     <Card className="sticky top-3 overflow-hidden border-border/60 bg-white">
       <CardHeader className="pb-1">
-        <Badge className="w-fit">Review rapide</Badge>
-        <CardTitle>Verifier avant de continuer</CardTitle>
+        <CardTitle>Vérification du dossier</CardTitle>
         <CardDescription>
-          Les informations deja validees s'ajoutent ici au fil des etapes.
+          Les informations déjà validées s'ajoutent ici au fil des étapes.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
         {reachedStep1 ? (
-          <ReviewSection badge="Etape 1" title="Centre et formule">
+          <ReviewSection badge="Étape 1" title="Centre et formule">
             <div className="grid gap-2">
               <div className="flex items-start gap-2.5 text-sm text-foreground">
                 <MapPin className="mt-0.5 h-4 w-4 text-primary" />
                 <div>
-                  <p className="font-medium">{currentCenter?.label || 'Centre non selectionne'}</p>
+                  <p className="font-medium">
+                    {currentCenter?.label || 'Centre non sélectionné'}
+                  </p>
                   <p className="text-muted-foreground">
-                    {values.nbTravellers} voyageur{values.nbTravellers > 1 ? 's' : ''}
+                    {values.nbTravellers} voyageur
+                    {values.nbTravellers > 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
-              <ReviewRow label="Formule" value={formatFormulaLabel(values.formula)} />
+              <ReviewRow
+                label="Formule"
+                value={formatFormulaLabel(values.formula)}
+              />
               <ReviewRow
                 label="Conditions"
                 value={values.cgv ? 'Acceptees' : 'En attente'}
@@ -209,7 +208,7 @@ export function SummaryPanel({
         ) : null}
 
         {reachedStep2 ? (
-          <ReviewSection badge="Etape 2" title="Demandeur et visa">
+          <ReviewSection badge="Étape 2" title="Demandeur et visa">
             <div className="space-y-3">
               {values.travellers.map((traveller, index) => {
                 const stayDuration = selectStayDurations(visaTypes).find(
@@ -311,7 +310,10 @@ export function SummaryPanel({
                         Voyageur {index + 1}
                       </p>
                       {index === 0 ? (
-                        <Badge variant="secondary" className="px-2 py-0 text-[11px]">
+                        <Badge
+                          variant="secondary"
+                          className="px-2 py-0 text-[11px]"
+                        >
                           Principal
                         </Badge>
                       ) : null}
@@ -329,7 +331,8 @@ export function SummaryPanel({
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Les informations du voyageur apparaitront ici apres validation.
+                        Les informations du voyageur apparaitront ici apres
+                        validation.
                       </p>
                     )}
 
@@ -357,29 +360,34 @@ export function SummaryPanel({
         ) : null}
 
         {reachedStep3 ? (
-          <ReviewSection badge="Etape 3" title="Services choisis">
+          <ReviewSection badge="Étape 3" title="Services choisis">
             {serviceReviewRows.length > 0 ? (
               <div className="space-y-2">
                 {serviceReviewRows.map((row) => (
-                  <ReviewRow key={row.label} label={row.label} value={row.value} />
-                ))}
-                {values.optionalServices.followSms && values.optionalServices.smsMobile ? (
                   <ReviewRow
-                    label="Numero SMS"
+                    key={row.label}
+                    label={row.label}
+                    value={row.value}
+                  />
+                ))}
+                {values.optionalServices.followSms &&
+                values.optionalServices.smsMobile ? (
+                  <ReviewRow
+                    label="Numéro SMS"
                     value={values.optionalServices.smsMobile}
                   />
                 ) : null}
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Les choix de service apparaitront ici apres cette etape.
+                Les choix de service apparaitront ici apres cette étape.
               </p>
             )}
           </ReviewSection>
         ) : null}
 
         {showAppointmentReview ? (
-          <ReviewSection badge="Etape 4" title="Rendez-vous">
+          <ReviewSection badge="Étape 4" title="Rendez-vous">
             <div className="space-y-2">
               <div className="flex items-start gap-2.5 text-sm text-foreground">
                 <CalendarDays className="mt-0.5 h-4 w-4 text-primary" />
@@ -387,14 +395,16 @@ export function SummaryPanel({
                   <p className="font-medium">
                     {values.appointment.chooseAppointmentDate
                       ? values.appointment.dateSubmit
-                        ? formatAppointmentDateLabel(values.appointment.dateSubmit)
-                        : values.appointment.date || 'Date non selectionnee'
+                        ? formatAppointmentDateLabel(
+                            values.appointment.dateSubmit,
+                          )
+                        : values.appointment.date || 'Date non sélectionnée'
                       : "Mode file d'attente"}
                   </p>
                   <p className="text-muted-foreground">
                     {values.appointment.chooseAppointmentDate
                       ? getSelectedAppointmentTimeLabel(values) ||
-                        'Heure non selectionnee'
+                        'Heure non sélectionnée'
                       : 'Soumission sans choix de date'}
                   </p>
                 </div>
@@ -403,19 +413,21 @@ export function SummaryPanel({
                 <CheckCircle2
                   className={cn(
                     'mt-0.5 h-4 w-4',
-                    values.appointment.captchaToken ? 'text-emerald-600' : 'text-slate-400',
+                    values.appointment.captchaToken
+                      ? 'text-emerald-600'
+                      : 'text-slate-400',
                   )}
                 />
                 <div>
                   <p className="font-medium">
                     {values.appointment.captchaToken
-                      ? 'Verification completee'
-                      : 'Verification en attente'}
+                      ? 'Vérification complétée'
+                      : 'Vérification en attente'}
                   </p>
                   <p className="text-muted-foreground">
                     {values.appointment.captchaToken
-                      ? 'Le jeton manuel est pret pour la soumission.'
-                      : 'Passez la verification avant la soumission finale.'}
+                      ? 'Le jeton manuel est prêt pour la soumission.'
+                      : 'Passez la vérification avant la soumission finale.'}
                   </p>
                 </div>
               </div>
@@ -424,19 +436,20 @@ export function SummaryPanel({
         ) : null}
 
         {!reachedStep1 ? (
-          <div className="rounded-xl bg-slate-50/70 px-3 py-4 text-sm text-muted-foreground">
-            Le resume commencera a se remplir apres validation de la premiere etape.
+          <div className="rounded-md bg-slate-50/70 px-3 py-4 text-sm text-muted-foreground">
+            Le resume commencera a se remplir apres validation de la premiere
+            étape.
           </div>
         ) : null}
 
-        <div className="rounded-xl border border-dashed border-border/70 px-3 py-3">
+        <div className="rounded-md border border-dashed border-border/70 px-3 py-3">
           <div className="flex items-center gap-2 text-sm font-medium text-foreground">
             <ClipboardList className="h-4 w-4 text-primary" />
             Relecture rapide
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ce panneau remplace la liste technique et garde seulement les choix utiles
-            avant la soumission.
+            Vérifiez les informations avant chaque envoi. Les disponibilités et
+            la vérification doivent être renouvelées pour une nouvelle demande.
           </p>
         </div>
       </CardContent>

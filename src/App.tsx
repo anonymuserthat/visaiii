@@ -1,32 +1,30 @@
 import { useEffect, useRef, useState } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import {
-  BellRing,
   ChartColumnBig,
   ClipboardList,
   ClockArrowUp,
   LifeBuoy,
-  LogOut,
   Mail,
   PlusSquare,
   UserRound,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
-import { Badge } from '@/components/ui/badge'
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { BookingShell } from '@/features/booking/booking-shell'
 import { ContactPage } from '@/features/dashboard/pages/contact-page'
 import { ExpiredPage } from '@/features/dashboard/pages/expired-page'
+import { GmailPage } from '@/features/dashboard/pages/gmail-page'
 import { HistoryPage } from '@/features/dashboard/pages/history-page'
 import { StatisticsPage } from '@/features/dashboard/pages/statistics-page'
 import { bookingClient } from '@/lib/api/bookingClient'
 import { useRequestRecordsQuery } from '@/lib/api/hooks'
 import type { CurrentUserProfile } from '@/lib/api/types'
 import { RUNTIME_CONFIG } from '@/lib/config'
-import { getMessages } from '@/lib/i18n/strings'
 import {
   getPendingExpiryReminders,
   getRequestPrimaryLabel,
@@ -39,7 +37,8 @@ import {
 import { useBookingStore } from '@/lib/state/store'
 import { isTauriEnvironment } from '@/lib/utils'
 
-type AppPage = 'new-request' | 'history' | 'expired' | 'statistics' | 'contact'
+type AppPage =
+  'new-request' | 'history' | 'expired' | 'statistics' | 'contact' | 'gmail'
 
 const EMPTY_CURRENT_USER: CurrentUserProfile = {
   name: '',
@@ -47,31 +46,36 @@ const EMPTY_CURRENT_USER: CurrentUserProfile = {
 }
 
 function App() {
-  const locale = useBookingStore((state) => state.locale)
   const hydrateDraft = useBookingStore((state) => state.hydrateDraft)
   const resetDraft = useBookingStore((state) => state.resetDraft)
   const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
   const markStepCompleted = useBookingStore((state) => state.markStepCompleted)
   const clearSubmission = useBookingStore((state) => state.clearSubmission)
-  const setSelectedCenterId = useBookingStore((state) => state.setSelectedCenterId)
+  const setSelectedCenterId = useBookingStore(
+    (state) => state.setSelectedCenterId,
+  )
   const socialTitles = useBookingStore((state) => state.socialTitles)
-  const visaFileVariations = useBookingStore((state) => state.visaFileVariations)
+  const visaFileVariations = useBookingStore(
+    (state) => state.visaFileVariations,
+  )
   const visaTypes = useBookingStore((state) => state.visaTypes)
-  const copy = getMessages(locale)
   const requestRecordsQuery = useRequestRecordsQuery()
   const requestRecords = requestRecordsQuery.data ?? []
-  const expiredRecords = requestRecords.filter((record) => isRequestExpired(record))
+  const expiredRecords = requestRecords.filter((record) =>
+    isRequestExpired(record),
+  )
   const requestStatistics = getRequestStatistics(requestRecords)
   const pendingReminders = getPendingExpiryReminders(requestRecords)
   const reminderSignatureRef = useRef('')
   const [activePage, setActivePage] = useState<AppPage>('new-request')
-  const [currentUser, setCurrentUser] = useState<CurrentUserProfile | null>(null)
+  const [currentUser, setCurrentUser] = useState<CurrentUserProfile | null>(
+    null,
+  )
   const [currentUserDraft, setCurrentUserDraft] =
     useState<CurrentUserProfile>(EMPTY_CURRENT_USER)
   const [currentUserLoaded, setCurrentUserLoaded] = useState(false)
   const [isEditingCurrentUser, setIsEditingCurrentUser] = useState(false)
   const [isClosePromptOpen, setIsClosePromptOpen] = useState(false)
-  const closeCancelButtonRef = useRef<HTMLButtonElement>(null)
   const confirmedCloseRef = useRef(false)
 
   useEffect(() => {
@@ -89,37 +93,28 @@ function App() {
     let disposed = false
     let unlisten: (() => void) | undefined
 
-    void appWindow.onCloseRequested((event) => {
-      if (confirmedCloseRef.current) return
-      event.preventDefault()
-      setIsClosePromptOpen(true)
-    }).then((stop) => {
-      if (disposed) stop()
-      else unlisten = stop
-    }).catch((error) => {
-      console.error('Impossible de proteger la fermeture de la fenetre', error)
-    })
+    void appWindow
+      .onCloseRequested((event) => {
+        if (confirmedCloseRef.current) return
+        event.preventDefault()
+        setIsClosePromptOpen(true)
+      })
+      .then((stop) => {
+        if (disposed) stop()
+        else unlisten = stop
+      })
+      .catch((error) => {
+        console.error(
+          'Impossible de proteger la fermeture de la fenetre',
+          error,
+        )
+      })
 
     return () => {
       disposed = true
       unlisten?.()
     }
   }, [])
-
-  useEffect(() => {
-    if (!isClosePromptOpen) {
-      return
-    }
-
-    closeCancelButtonRef.current?.focus()
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        setIsClosePromptOpen(false)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [isClosePromptOpen])
 
   async function confirmClose() {
     confirmedCloseRef.current = true
@@ -174,9 +169,12 @@ function App() {
     }
 
     reminderSignatureRef.current = signature
-    toast.warning(`${pendingReminders.length} dossier(s) ont depasse 30 jours.`, {
-      description: `${getRequestPrimaryLabel(pendingReminders[0])} peut etre recharge depuis la page Expirees.`,
-    })
+    toast.warning(
+      `${pendingReminders.length} dossier(s) ont depasse 30 jours.`,
+      {
+        description: `${getRequestPrimaryLabel(pendingReminders[0])} peut etre recharge depuis la page Expirees.`,
+      },
+    )
   }, [pendingReminders])
 
   async function handleReuseRecord(
@@ -204,12 +202,14 @@ function App() {
     setActivePage('new-request')
     toast.success(
       mode === 'test'
-        ? 'Mode test actif. Le dossier a ete recharge comme une re-demande expiree: reprenez directement le rendez-vous et le reCAPTCHA.'
+        ? 'Mode test actif. Le dossier a ete recharge comme une re-demande expirée: reprenez directement le rendez-vous et le reCAPTCHA.'
         : 'Le dossier a ete recharge. Reprenez le rendez-vous et le reCAPTCHA avant la nouvelle soumission.',
     )
   }
 
-  async function handleDismissReminder(record: (typeof requestRecords)[number]) {
+  async function handleDismissReminder(
+    record: (typeof requestRecords)[number],
+  ) {
     await bookingClient.dismissRequestReminder(record.id)
     await requestRecordsQuery.refetch()
     toast.success('Le rappel a ete masque pour ce dossier.')
@@ -242,7 +242,7 @@ function App() {
       toast.success(
         currentUser
           ? 'Utilisateur actif mis a jour.'
-          : 'Utilisateur actif enregistre.',
+          : 'Utilisateur actif enregistré.',
       )
     } catch (error) {
       console.error(error)
@@ -253,32 +253,33 @@ function App() {
   const navigationItems = [
     {
       id: 'new-request',
-      label: 'New Request',
+      label: 'Nouvelle demande',
       hint: 'Flux actuel',
       icon: PlusSquare,
     },
     {
       id: 'history',
-      label: 'History',
+      label: 'Historique',
       hint: `${requestRecords.length} dossier(s)`,
       icon: ClipboardList,
     },
     {
       id: 'expired',
-      label: 'Expired',
+      label: 'Demandes expirées',
       hint: `${expiredRecords.length} a revoir`,
       icon: ClockArrowUp,
     },
     {
       id: 'statistics',
-      label: 'Statistics',
+      label: 'Statistiques',
       hint: `${requestStatistics.monthCount} ce mois`,
       icon: ChartColumnBig,
     },
+    { id: 'gmail', label: 'Messagerie', hint: 'Gmail', icon: Mail },
     {
       id: 'contact',
-      label: 'Contact',
-      hint: 'Developer',
+      label: 'Assistance',
+      hint: 'Contact',
       icon: LifeBuoy,
     },
   ] as const
@@ -287,52 +288,54 @@ function App() {
     'new-request': {
       title: 'Nouvelle demande',
       description:
-        'Toute la logique existante reste ici, avec une interface plus claire et une navigation par pages.',
+        'Préparez le dossier, vérifiez les informations et transmettez votre demande.',
     },
     history: {
       title: 'Historique des demandes',
-      description:
-        'Retrouvez toutes les soumissions reussies avec les informations utiles pour suivi ou reutilisation.',
+      description: 'Recherchez, consultez ou reprenez un dossier enregistré.',
     },
     expired: {
-      title: 'Demandes expirees',
+      title: 'Demandes expirées',
       description:
-        'Les dossiers vieux de 30 jours ou plus remontent ici pour etre relances rapidement.',
+        'Les dossiers de plus de 30 jours restent disponibles pour une nouvelle demande.',
     },
     statistics: {
       title: 'Statistiques',
       description:
-        "Vue d'ensemble sur l'activite du jour, du mois, de l'annee et la repartition des demandes.",
+        'Suivez votre activité et la répartition des demandes enregistrées.',
+    },
+    gmail: {
+      title: 'Messagerie',
+      description:
+        'Consultez les messages de votre compte Gmail en lecture seule.',
     },
     contact: {
-      title: 'Contact developer',
+      title: 'Assistance',
       description:
-        'Infos de contact directes et rappel des bons gestes quand un dossier doit etre relance.',
+        'Retrouvez les coordonnées du développeur et les repères utiles.',
     },
   }
 
   return (
-    <main className="min-h-screen bg-background">
-      <div className="mx-auto max-w-[1440px] px-2 py-2 sm:px-3 lg:px-4">
-        <div className="grid gap-2 xl:grid-cols-[216px_minmax(0,1fr)]">
-          <aside className="space-y-3 xl:sticky xl:top-3 xl:self-start">
-            <section className="overflow-hidden rounded-xl border border-border/60 bg-white px-3 py-3">
-              <div className="mb-2 flex flex-wrap gap-2">
-                <Badge>Windows desktop</Badge>
-                <Badge variant="secondary">
-                  {RUNTIME_CONFIG.mockMode ? 'Mock mode' : 'Live mode'}
-                </Badge>
+    <main className="app-shell">
+      <a className="skip-link" href="#workspace">
+        Aller au contenu
+      </a>
+      <div className="app-frame">
+        <div className="app-layout">
+          <aside className="app-navigation" aria-label="Navigation principale">
+            <div className="app-brand">
+              <span className="brand-symbol" aria-hidden="true">
+                D<span>V</span>
+              </span>
+              <div>
+                <strong>Damander Visa</strong>
+                <small>Espace de travail</small>
               </div>
-              <h1 className="font-display text-xl font-semibold tracking-tight text-foreground">
-                {copy.appTitle}
-              </h1>
-              <p className="mt-1.5 text-sm leading-6 text-muted-foreground">
-                {copy.appSubtitle}
-              </p>
-            </section>
-
-             <nav className="rounded-xl border border-border/60 bg-white p-2">
-              <div className="space-y-2">
+            </div>
+            <div className="nav-section-label">DOSSIERS</div>
+            <nav aria-label="Dossiers">
+              <div className="nav-items">
                 {navigationItems.map((item) => {
                   const Icon = item.icon
                   const isActive = activePage === item.id
@@ -342,27 +345,20 @@ function App() {
                       key={item.id}
                       type="button"
                       onClick={() => setActivePage(item.id)}
-                      className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-left transition-colors ${
-                        isActive
-                          ? 'bg-primary text-primary-foreground shadow-sm'
-                          : 'bg-transparent text-foreground hover:bg-slate-100'
-                      }`}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`nav-item ${isActive ? 'is-active' : ''}`}
                     >
                       <span className="flex items-center gap-3">
                         <Icon className="h-4 w-4" />
                         <span>
-                          <span className="block text-sm font-semibold">
-                            {item.label}
-                          </span>
-                           <span
-                             className={`block text-xs ${
-                               isActive
-                                 ? 'text-primary-foreground/75'
-                                 : 'text-muted-foreground'
-                             }`}
-                           >
-                             {item.hint}
-                          </span>
+                          <span className="nav-label">{item.label}</span>
+                          {item.id === 'history' || item.id === 'expired' ? (
+                            <span className="nav-count">
+                              {item.id === 'history'
+                                ? requestRecords.length
+                                : expiredRecords.length}
+                            </span>
+                          ) : null}
                         </span>
                       </span>
                     </button>
@@ -370,149 +366,133 @@ function App() {
                 })}
               </div>
             </nav>
-            <Card>
-              <CardContent className="space-y-3 py-3">
-                <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                  <UserRound className="h-4 w-4 text-primary" />
-                  Utilisateur actif
-                </div>
-
-                {!currentUserLoaded ? (
-                  <p className="text-sm text-muted-foreground">
-                    Chargement de l&apos;utilisateur...
-                  </p>
-                ) : currentUser && !isEditingCurrentUser ? (
-                  <>
-                    <div className="rounded-lg bg-slate-50 px-3 py-3 text-sm">
-                      <p className="font-medium text-foreground">{currentUser.name}</p>
-                      <p className="mt-1 inline-flex items-center gap-2 text-muted-foreground">
-                        <Mail className="h-4 w-4" />
-                        {currentUser.email}
-                      </p>
-                    </div>
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setCurrentUserDraft(currentUser)
-                        setIsEditingCurrentUser(true)
-                      }}
-                    >
-                      Changer l&apos;utilisateur
-                    </Button>
-                  </>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      {currentUser
-                        ? "Mettez a jour le nom ou l'email de l'utilisateur actif."
-                        : "Renseignez une premiere fois le nom et l'email de l'utilisateur qui travaille sur cette installation."}
-                    </p>
-                    <Input
-                      aria-label="Nom de l'utilisateur actif"
-                      placeholder="Nom complet"
-                      value={currentUserDraft.name}
-                      onChange={(event) =>
-                        setCurrentUserDraft((state) => ({
-                          ...state,
-                          name: event.target.value,
-                        }))
-                      }
-                    />
-                    <Input
-                      aria-label="Email de l'utilisateur actif"
-                      type="email"
-                      placeholder="email@exemple.com"
-                      value={currentUserDraft.email}
-                      onChange={(event) =>
-                        setCurrentUserDraft((state) => ({
-                          ...state,
-                          email: event.target.value,
-                        }))
-                      }
-                    />
-                    <div className="flex flex-wrap gap-2">
-                      <Button type="button" size="sm" onClick={() => void handleSaveCurrentUser()}>
-                        Enregistrer
-                      </Button>
-                      {currentUser ? (
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            setCurrentUserDraft(currentUser)
-                            setIsEditingCurrentUser(false)
-                          }}
-                        >
-                          Annuler
-                        </Button>
-                      ) : null}
-                    </div>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <div className="navigation-footer">
+              <span className="mode-dot" />
+              {RUNTIME_CONFIG.mockMode
+                ? 'Démonstration locale'
+                : 'Connexion Capago'}
+              <small>Version 0.2.0</small>
+            </div>
           </aside>
 
-          <section className="space-y-4">
-            {pendingReminders.length > 0 ? (
-              <Card className="border-amber-200/80 bg-amber-50/55">
-                <CardContent className="flex flex-col gap-3 py-3 md:flex-row md:items-center md:justify-between">
-                  <div className="flex items-start gap-3">
-                    <BellRing className="mt-0.5 h-5 w-5 text-amber-700" />
-                    <div>
-                      <p className="font-semibold text-amber-950">
-                        {pendingReminders.length} dossier(s) ont depasse 30 jours
-                      </p>
-                      <p className="text-sm text-amber-900/80">
-                        Ouvrez la page Expirees pour recharger les infos
-                        candidats puis refaire le rendez-vous et le reCAPTCHA.
-                      </p>
-                    </div>
+          <section id="workspace" className="workspace" tabIndex={-1}>
+            <header className="workspace-header">
+              <div>
+                <p className="eyebrow">
+                  DAMANDER /{' '}
+                  {activePage === 'new-request' ? 'PRÉPARATION' : 'GESTION'}
+                </p>
+                <h1>{pageCopy[activePage].title}</h1>
+                <p>{pageCopy[activePage].description}</p>
+              </div>
+              <span className="workspace-context">
+                {requestStatistics.totalCount} dossier
+                {requestStatistics.totalCount > 1 ? 's' : ''} enregistré
+                {requestStatistics.totalCount > 1 ? 's' : ''}
+              </span>
+            </header>
+            <details
+              className="profile-settings"
+              open={!currentUser || isEditingCurrentUser}
+            >
+              <summary>
+                <UserRound className="h-4 w-4" />
+                {currentUser
+                  ? `${currentUser.name} · ${currentUser.email}`
+                  : 'Configurer votre profil opérateur'}
+                <span>Profil et session</span>
+              </summary>
+              <Card>
+                <CardContent className="space-y-3 py-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                    <UserRound className="h-4 w-4 text-primary" />
+                    Utilisateur actif
                   </div>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => setActivePage('expired')}
-                  >
-                    Voir les demandes expirees
-                  </Button>
+
+                  {!currentUserLoaded ? (
+                    <p className="text-sm text-muted-foreground">
+                      Chargement de l&apos;utilisateur...
+                    </p>
+                  ) : currentUser && !isEditingCurrentUser ? (
+                    <>
+                      <div className="rounded-lg bg-slate-50 px-3 py-3 text-sm">
+                        <p className="font-medium text-foreground">
+                          {currentUser.name}
+                        </p>
+                        <p className="mt-1 inline-flex items-center gap-2 text-muted-foreground">
+                          <Mail className="h-4 w-4" />
+                          {currentUser.email}
+                        </p>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setCurrentUserDraft(currentUser)
+                          setIsEditingCurrentUser(true)
+                        }}
+                      >
+                        Changer l&apos;utilisateur
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        {currentUser
+                          ? "Mettez a jour le nom ou l'email de l'utilisateur actif."
+                          : "Renseignez une premiere fois le nom et l'email de l'utilisateur qui travaille sur cette installation."}
+                      </p>
+                      <Input
+                        aria-label="Nom de l'utilisateur actif"
+                        placeholder="Nom complet"
+                        value={currentUserDraft.name}
+                        onChange={(event) =>
+                          setCurrentUserDraft((state) => ({
+                            ...state,
+                            name: event.target.value,
+                          }))
+                        }
+                      />
+                      <Input
+                        aria-label="Email de l'utilisateur actif"
+                        type="email"
+                        placeholder="email@exemple.com"
+                        value={currentUserDraft.email}
+                        onChange={(event) =>
+                          setCurrentUserDraft((state) => ({
+                            ...state,
+                            email: event.target.value,
+                          }))
+                        }
+                      />
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => void handleSaveCurrentUser()}
+                        >
+                          Enregistrer
+                        </Button>
+                        {currentUser ? (
+                          <Button
+                            type="button"
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => {
+                              setCurrentUserDraft(currentUser)
+                              setIsEditingCurrentUser(false)
+                            }}
+                          >
+                            Annuler
+                          </Button>
+                        ) : null}
+                      </div>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
-            ) : null}
-
-            <section className="rounded-xl border border-border/60 bg-white px-3 py-3">
-              <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="max-w-3xl space-y-2">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge>{pageCopy[activePage].title}</Badge>
-                    <Badge variant="outline">
-                      {requestStatistics.totalCount} demande(s) sauvegardee(s)
-                    </Badge>
-                  </div>
-                  <h2 className="font-display text-xl font-semibold tracking-tight text-foreground">
-                    {pageCopy[activePage].title}
-                  </h2>
-                  <p className="text-sm leading-6 text-muted-foreground">
-                    {pageCopy[activePage].description}
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-2 text-sm">
-                  <div className="rounded-full bg-slate-50 px-3 py-1 text-foreground">
-                    Aujourd&apos;hui {requestStatistics.todayCount}
-                  </div>
-                  <div className="rounded-full bg-slate-50 px-3 py-1 text-foreground">
-                    Ce mois {requestStatistics.monthCount}
-                  </div>
-                  <div className="rounded-full bg-slate-50 px-3 py-1 text-foreground">
-                    Expirees {requestStatistics.expiredCount}
-                  </div>
-                </div>
-              </div>
-            </section>
-
+            </details>
             {activePage === 'new-request' ? (
               !currentUserLoaded ? (
                 <Card>
@@ -521,9 +501,7 @@ function App() {
                   </CardContent>
                 </Card>
               ) : currentUser ? (
-                <BookingShell
-                  currentUser={currentUser}
-                />
+                <BookingShell currentUser={currentUser} />
               ) : (
                 <Card>
                   <CardContent className="space-y-2 py-8 text-sm text-muted-foreground">
@@ -531,9 +509,9 @@ function App() {
                       Configurez d&apos;abord l&apos;utilisateur actif
                     </p>
                     <p>
-                      Renseignez le nom et l&apos;email dans la colonne de gauche pour
-                      attribuer correctement les nouvelles demandes et pre-remplir le
-                      contact principal.
+                      Renseignez votre nom et votre adresse e-mail ci-dessus
+                      pour attribuer correctement les nouvelles demandes et
+                      pre-remplir le contact principal.
                     </p>
                   </CardContent>
                 </Card>
@@ -565,59 +543,18 @@ function App() {
               <StatisticsPage stats={requestStatistics} />
             ) : null}
             {activePage === 'contact' ? <ContactPage /> : null}
+            {activePage === 'gmail' ? <GmailPage /> : null}
           </section>
         </div>
       </div>
       {isClosePromptOpen ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/35 p-4 backdrop-blur-[2px]"
-          role="presentation"
-          onMouseDown={(event) => {
-            if (event.target === event.currentTarget) {
-              setIsClosePromptOpen(false)
-            }
-          }}
-        >
-          <section
-            aria-describedby="close-prompt-description"
-            aria-labelledby="close-prompt-title"
-            aria-modal="true"
-            className="w-full max-w-md overflow-hidden rounded-2xl border border-border/70 bg-white shadow-2xl"
-            role="dialog"
-          >
-            <div className="flex items-start gap-4 border-b border-border/60 bg-slate-50 px-5 py-5">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                <LogOut className="h-5 w-5" aria-hidden="true" />
-              </div>
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">
-                  Damander Visa
-                </p>
-                <h2 id="close-prompt-title" className="mt-1 font-display text-xl font-semibold tracking-tight">
-                  Quitter l&apos;application ?
-                </h2>
-              </div>
-            </div>
-            <div className="space-y-5 px-5 py-5">
-              <p id="close-prompt-description" className="text-sm leading-6 text-muted-foreground">
-                Votre brouillon local est conserve. Voulez-vous fermer Damander Visa maintenant ?
-              </p>
-              <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-                <Button
-                  ref={closeCancelButtonRef}
-                  type="button"
-                  variant="secondary"
-                  onClick={() => setIsClosePromptOpen(false)}
-                >
-                  Continuer
-                </Button>
-                <Button type="button" onClick={() => void confirmClose()}>
-                  Oui, quitter
-                </Button>
-              </div>
-            </div>
-          </section>
-        </div>
+        <ConfirmDialog
+          title="Quitter l’application ?"
+          description="Votre brouillon local reste conservé sur cet appareil."
+          confirmLabel="Quitter l’application"
+          onCancel={() => setIsClosePromptOpen(false)}
+          onConfirm={() => void confirmClose()}
+        />
       ) : null}
     </main>
   )

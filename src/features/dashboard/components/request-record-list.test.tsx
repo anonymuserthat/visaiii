@@ -6,7 +6,9 @@ import { RequestRecordList } from '@/features/dashboard/components/request-recor
 import type { StoredRequestRecord, VisaTypeItem } from '@/lib/api/types'
 import { createEmptyBookingDraft } from '@/lib/state/defaults'
 
-function createRecord(overrides: Partial<StoredRequestRecord>): StoredRequestRecord {
+function createRecord(
+  overrides: Partial<StoredRequestRecord>,
+): StoredRequestRecord {
   return {
     id: overrides.id ?? 'req_1',
     submittedAt: overrides.submittedAt ?? '2026-03-27T10:00:00.000Z',
@@ -17,7 +19,8 @@ function createRecord(overrides: Partial<StoredRequestRecord>): StoredRequestRec
     formula: overrides.formula ?? 'standard',
     travellerCount: overrides.travellerCount ?? 1,
     primaryTravellerName: overrides.primaryTravellerName ?? 'Voyageur Test',
-    primaryTravellerEmail: overrides.primaryTravellerEmail ?? 'voyageur@test.dev',
+    primaryTravellerEmail:
+      overrides.primaryTravellerEmail ?? 'voyageur@test.dev',
     primaryTravellerPhone: overrides.primaryTravellerPhone ?? '0660000000',
     appointmentDate: overrides.appointmentDate ?? '12 Mai 2026',
     appointmentTime: overrides.appointmentTime ?? '9:00 AM',
@@ -104,7 +107,9 @@ describe('RequestRecordList', () => {
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument()
     expect(screen.queryByText('Gamma')).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /reinitialiser les filtres/i }))
+    await user.click(
+      screen.getByRole('button', { name: /réinitialiser les filtres/i }),
+    )
     fireEvent.change(screen.getByLabelText(/date de soumission a partir de/i), {
       target: { value: '2026-03-21' },
     })
@@ -146,7 +151,9 @@ describe('RequestRecordList', () => {
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(screen.queryByText('Beta')).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /reinitialiser les filtres/i }))
+    await user.click(
+      screen.getByRole('button', { name: /réinitialiser les filtres/i }),
+    )
 
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText('Beta')).toBeInTheDocument()
@@ -181,7 +188,8 @@ describe('RequestRecordList', () => {
     expect(screen.getByText('Beta')).toBeInTheDocument()
   })
 
-  it('shows all voyageurs for a multi-traveller request', () => {
+  it('shows all voyageurs for a multi-traveller request', async () => {
+    const user = userEvent.setup()
     const draft = createEmptyBookingDraft()
     draft.travellers = [
       {
@@ -219,6 +227,7 @@ describe('RequestRecordList', () => {
       />,
     )
 
+    await user.click(screen.getByText(/Tous les voyageurs/i))
     expect(screen.getByText(/Tous les voyageurs/i)).toBeInTheDocument()
     expect(screen.getByText(/Voyageur 1: Ayoub Belhisset/i)).toBeInTheDocument()
     expect(screen.getByText(/Voyageur 2: Ishak Belhisset/i)).toBeInTheDocument()
@@ -336,7 +345,7 @@ describe('RequestRecordList', () => {
       />,
     )
 
-    await user.click(screen.getByRole('button', { name: /details/i }))
+    await user.click(screen.getByRole('button', { name: /détails/i }))
 
     const dialog = screen.getByRole('dialog', { name: /nadia dossier/i })
     expect(within(dialog).getByText('Visa tourisme')).toBeInTheDocument()
@@ -344,5 +353,51 @@ describe('RequestRecordList', () => {
     expect(within(dialog).getByText('AB123456')).toBeInTheDocument()
     expect(within(dialog).getByText('Assistance demandee')).toBeInTheDocument()
     expect(within(dialog).getByText('Premiere demande')).toBeInTheDocument()
+  })
+})
+
+describe('Request sorting', () => {
+  it('sorts records without changing search results or the underlying records', async () => {
+    const user = userEvent.setup()
+    const records = [
+      createRecord({
+        id: 'new',
+        primaryTravellerName: 'Zohra',
+        submittedAt: '2026-04-02T10:00:00Z',
+      }),
+      createRecord({
+        id: 'old',
+        primaryTravellerName: 'Amine',
+        submittedAt: '2026-04-01T10:00:00Z',
+      }),
+    ]
+    const { container } = render(
+      <RequestRecordList
+        records={records}
+        scope="history"
+        onReuseRecord={vi.fn()}
+      />,
+    )
+    expect(
+      within(
+        container.querySelectorAll('.record-row')[0] as HTMLElement,
+      ).getByText('Zohra'),
+    ).toBeInTheDocument()
+    await user.selectOptions(
+      screen.getByLabelText('Trier les demandes'),
+      'oldest',
+    )
+    expect(
+      within(
+        container.querySelectorAll('.record-row')[0] as HTMLElement,
+      ).getByText('Amine'),
+    ).toBeInTheDocument()
+    await user.type(
+      screen.getByLabelText('Recherche dans les demandes'),
+      'Zohra',
+    )
+    expect(screen.getByText('Zohra')).toBeInTheDocument()
+    expect(screen.queryByText('Amine')).not.toBeInTheDocument()
+    expect(records.map((record) => record.id)).toEqual(['new', 'old'])
   })
 })

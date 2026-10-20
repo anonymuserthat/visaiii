@@ -28,7 +28,11 @@ function createMockAvailability(): AvailabilityResponse {
 let mockAvailability = createMockAvailability()
 
 const mockSlots = [
-  { value: '2026-04-06T08:00:00', rawValue: '2026-04-06T08:00:00', label: '8:00 AM' },
+  {
+    value: '2026-04-06T08:00:00',
+    rawValue: '2026-04-06T08:00:00',
+    label: '8:00 AM',
+  },
 ]
 
 function renderBookingShell(props?: ComponentProps<typeof BookingShell>) {
@@ -54,20 +58,34 @@ vi.mock('@/features/booking/hooks/use-booking-bootstrap', () => ({
   useBookingBootstrap: () => ({
     globalParamsQuery: { isLoading: false, error: null, isFetching: false },
     socialTitlesQuery: { isLoading: false, error: null, isFetching: false },
-    visaFileVariationsQuery: { isLoading: false, error: null, isFetching: false },
+    visaFileVariationsQuery: {
+      isLoading: false,
+      error: null,
+      isFetching: false,
+    },
     servicesQuery: { isLoading: false, error: null, isFetching: false },
     visaTypesQuery: { isLoading: false, error: null, isFetching: false },
   }),
 }))
 
 vi.mock('@/lib/api/hooks', () => ({
-  useUnavailableDaysQuery: (_centerId: string, _formula: string, _visaFileList: string, enabled = true) => ({
+  useUnavailableDaysQuery: (
+    _centerId: string,
+    _formula: string,
+    _visaFileList: string,
+    enabled = true,
+  ) => ({
     data: enabled ? mockAvailability : undefined,
     isLoading: false,
     isFetching: false,
     error: null,
   }),
-  useAvailableSlotsQuery: (_centerId: string, _formula: string, day: string, enabled = true) => ({
+  useAvailableSlotsQuery: (
+    _centerId: string,
+    _formula: string,
+    day: string,
+    enabled = true,
+  ) => ({
     data: enabled && day ? mockSlots : undefined,
     isLoading: false,
     isFetching: false,
@@ -80,7 +98,9 @@ vi.mock('@/lib/api/bookingClient', () => ({
     loadDraft: vi.fn().mockResolvedValue(null),
     saveDraft: vi.fn().mockResolvedValue(undefined),
     submitBooking: vi.fn(),
-    saveRequestRecord: vi.fn().mockResolvedValue({ databaseSyncStatus: 'local_only' }),
+    saveRequestRecord: vi
+      .fn()
+      .mockResolvedValue({ databaseSyncStatus: 'local_only' }),
     appendAuditEntry: vi.fn().mockResolvedValue(undefined),
   },
 }))
@@ -99,7 +119,7 @@ vi.mock('@/lib/audit/logger', () => ({
 }))
 
 vi.mock('@/lib/recaptcha/solver', async (importOriginal) => ({
-  ...await importOriginal<typeof import('@/lib/recaptcha/solver')>(),
+  ...(await importOriginal<typeof import('@/lib/recaptcha/solver')>()),
   canSolveAutomatically: vi.fn().mockReturnValue(false),
   solveCaptcha: vi.fn(),
 }))
@@ -238,7 +258,11 @@ describe('BookingShell flow', () => {
               id: 'single_entry',
               label: 'Entree unique',
               validationChecklistList: [
-                { id: 'checklist_1', label: 'Check-list tourisme', description: null },
+                {
+                  id: 'checklist_1',
+                  label: 'Check-list tourisme',
+                  description: null,
+                },
               ],
             },
           ],
@@ -293,11 +317,17 @@ describe('BookingShell flow', () => {
 
   function seedAutomaticSubmission() {
     seedStore(4)
-    mockAvailability = { ...createMockAvailability(), chooseAppointmentDate: false }
+    mockAvailability = {
+      ...createMockAvailability(),
+      chooseAppointmentDate: false,
+    }
     useBookingStore.setState((state) => ({
       draft: {
         ...state.draft,
-        appointment: { ...state.draft.appointment, chooseAppointmentDate: false },
+        appointment: {
+          ...state.draft.appointment,
+          chooseAppointmentDate: false,
+        },
       },
     }))
     vi.mocked(canSolveAutomatically).mockReturnValue(true)
@@ -307,17 +337,26 @@ describe('BookingShell flow', () => {
     seedAutomaticSubmission()
     vi.mocked(solveCaptcha).mockResolvedValue('fresh-solver-token')
     vi.mocked(bookingClient.submitBooking).mockResolvedValue({
-      status: 200, location: null,
+      status: 200,
+      location: null,
     })
     const user = userEvent.setup()
     renderBookingShell()
-    await user.click(await screen.findByRole('button', { name: /Soumettre la demande/i }))
-    await waitFor(() => expect(bookingClient.submitBooking).toHaveBeenCalledOnce())
+    await user.click(
+      await screen.findByRole('button', { name: /Soumettre la demande/i }),
+    )
+    await waitFor(() =>
+      expect(bookingClient.submitBooking).toHaveBeenCalledOnce(),
+    )
     expect(solveCaptcha).toHaveBeenCalledOnce()
     expect(vi.mocked(solveCaptcha).mock.invocationCallOrder[0]).toBeLessThan(
       vi.mocked(bookingClient.submitBooking).mock.invocationCallOrder[0],
     )
-    expect(vi.mocked(bookingClient.submitBooking).mock.calls[0][0].fields['g-recaptcha-response']).toBe('fresh-solver-token')
+    expect(
+      vi.mocked(bookingClient.submitBooking).mock.calls[0][0].fields[
+        'g-recaptcha-response'
+      ],
+    ).toBe('fresh-solver-token')
     expect(useBookingStore.getState().draft.appointment.captchaToken).toBe('')
   })
 
@@ -333,15 +372,22 @@ describe('BookingShell flow', () => {
       },
     }))
     vi.mocked(bookingClient.submitBooking).mockResolvedValue({
-      status: 200, location: null,
+      status: 200,
+      location: null,
     })
     const user = userEvent.setup()
     renderBookingShell()
-    await user.click(await screen.findByRole('button', { name: /Soumettre la demande/i }))
-    await waitFor(() => expect(bookingClient.submitBooking).toHaveBeenCalledOnce())
+    await user.click(
+      await screen.findByRole('button', { name: /Soumettre la demande/i }),
+    )
+    await waitFor(() =>
+      expect(bookingClient.submitBooking).toHaveBeenCalledOnce(),
+    )
     expect(solveCaptcha).not.toHaveBeenCalled()
     expect(
-      vi.mocked(bookingClient.submitBooking).mock.calls[0][0].fields['g-recaptcha-response'],
+      vi.mocked(bookingClient.submitBooking).mock.calls[0][0].fields[
+        'g-recaptcha-response'
+      ],
     ).toBe('step-four-solver-token')
   })
 
@@ -350,18 +396,30 @@ describe('BookingShell flow', () => {
     vi.mocked(solveCaptcha).mockRejectedValue(new Error('ERROR_ZERO_BALANCE'))
     const user = userEvent.setup()
     renderBookingShell()
-    await user.click(await screen.findByRole('button', { name: /Soumettre la demande/i }))
-    await waitFor(() => expect(useBookingStore.getState().lastFailure?.rawMessages.join(' ')).toContain('ERROR_ZERO_BALANCE'))
+    await user.click(
+      await screen.findByRole('button', { name: /Soumettre la demande/i }),
+    )
+    await waitFor(() =>
+      expect(
+        useBookingStore.getState().lastFailure?.rawMessages.join(' '),
+      ).toContain('ERROR_ZERO_BALANCE'),
+    )
     expect(bookingClient.submitBooking).not.toHaveBeenCalled()
-    expect(screen.getByRole('button', { name: /Soumettre la demande/i })).toBeEnabled()
+    expect(
+      screen.getByRole('button', { name: /Soumettre la demande/i }),
+    ).toBeEnabled()
   })
 
   it('does not create a paid CAPTCHA task when the booking form is invalid', async () => {
     seedAutomaticSubmission()
-    useBookingStore.setState((state) => ({ draft: { ...state.draft, cgv: false } }))
+    useBookingStore.setState((state) => ({
+      draft: { ...state.draft, cgv: false },
+    }))
     const user = userEvent.setup()
     renderBookingShell()
-    await user.click(await screen.findByRole('button', { name: /Soumettre la demande/i }))
+    await user.click(
+      await screen.findByRole('button', { name: /Soumettre la demande/i }),
+    )
     await waitFor(() => expect(useBookingStore.getState().currentStep).toBe(1))
     expect(solveCaptcha).not.toHaveBeenCalled()
     expect(bookingClient.submitBooking).not.toHaveBeenCalled()
@@ -374,7 +432,7 @@ describe('BookingShell flow', () => {
 
     await user.click(screen.getByRole('button', { name: /continuer/i }))
 
-    await screen.findByText(/Voyageur 1/i)
+    await screen.findByRole('heading', { name: /Voyageur 1/i })
   })
 
   it('creates one traveller block per selected voyageur in step 1', async () => {
@@ -383,14 +441,11 @@ describe('BookingShell flow', () => {
 
     renderBookingShell()
 
-    await user.selectOptions(
-      screen.getByLabelText(/Nombre de voyageurs/i),
-      '2',
-    )
+    await user.selectOptions(screen.getByLabelText(/Nombre de voyageurs/i), '2')
     await user.click(screen.getByRole('button', { name: /continuer/i }))
 
-    await screen.findByText(/Voyageur 1/i)
-    expect(screen.getByText(/Voyageur 2/i)).toBeInTheDocument()
+    await screen.findByRole('heading', { name: /Voyageur 1/i })
+    expect(screen.getByRole('tab', { name: /Voyageur 2/i })).toBeInTheDocument()
   })
 
   it('moves from travellers to services when traveller details are already valid', async () => {
@@ -402,9 +457,7 @@ describe('BookingShell flow', () => {
     await user.click(screen.getByRole('button', { name: /continuer/i }))
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/Documents importants et services/i),
-      ).toBeInTheDocument()
+      expect(screen.getByText(/Services du dossier/i)).toBeInTheDocument()
     })
   })
 
@@ -428,11 +481,13 @@ describe('BookingShell flow', () => {
     await user.click(screen.getByRole('button', { name: /constantine/i }))
     await user.click(screen.getByRole('button', { name: /continuer/i }))
 
-    await screen.findByText(/Voyageur 1/i)
+    await screen.findByRole('heading', { name: /Voyageur 1/i })
     await waitFor(() => {
-      expect(screen.getByLabelText(/Type de visa demande/i)).toHaveValue('')
+      expect(screen.getByLabelText(/Type de visa demandé/i)).toHaveValue('')
       expect(screen.getByLabelText(/Votre projet/i)).toHaveValue('')
-      expect(screen.getByLabelText(/Motif principal du sejour/i)).toHaveValue('')
+      expect(screen.getByLabelText(/Motif principal du séjour/i)).toHaveValue(
+        '',
+      )
     })
   })
 
@@ -453,15 +508,16 @@ describe('BookingShell flow', () => {
 
     renderBookingShell()
 
-    await screen.findByText(/Documents importants et services/i)
+    await screen.findByText(/Services du dossier/i)
 
     expect(screen.getByLabelText(/Titre du contact/i)).toHaveValue('mr')
-    expect(screen.getByLabelText(/Numero mobile SMS/i)).toHaveValue('0555123456')
-
-    expect(screen.getByLabelText(/Recevoir des notifications/i)).toHaveAttribute(
-      'data-state',
-      'checked',
+    expect(screen.getByLabelText(/Numéro mobile SMS/i)).toHaveValue(
+      '0555123456',
     )
+
+    expect(
+      screen.getByLabelText(/Recevoir des notifications/i),
+    ).toHaveAttribute('data-state', 'checked')
     expect(
       screen.getByLabelText(/Voyageur 1 - Contact principal/i),
     ).toHaveAttribute('data-state', 'checked')
@@ -472,10 +528,12 @@ describe('BookingShell flow', () => {
 
     renderBookingShell()
 
-    await screen.findByText(/Documents importants et services/i)
+    await screen.findByText(/Services du dossier/i)
 
     expect(
-      screen.getByRole('radio', { name: /Non, je fournirai mes propres photos/i }),
+      screen.getByRole('radio', {
+        name: /Non, je fournirai mes propres photos/i,
+      }),
     ).toHaveAttribute('data-state', 'checked')
     expect(
       screen.getByRole('radio', { name: /Retrait au centre/i }),
@@ -487,8 +545,10 @@ describe('BookingShell flow', () => {
 
     renderBookingShell()
 
-    await screen.findByText(/Voyageur 1/i)
-    expect(screen.queryByText(/Dossier renouvellement/i)).not.toBeInTheDocument()
+    await screen.findByRole('heading', { name: /Voyageur 1/i })
+    expect(
+      screen.queryByText(/Dossier renouvellement/i),
+    ).not.toBeInTheDocument()
   })
 
   it('prefills the primary traveller email from the current user when empty', async () => {
@@ -512,9 +572,11 @@ describe('BookingShell flow', () => {
       currentUser: { name: 'Equipe Annaba', email: 'team.annaba@example.com' },
     })
 
-    await screen.findByText(/Voyageur 1/i)
+    await screen.findByRole('heading', { name: /Voyageur 1/i })
     await waitFor(() => {
-      expect(screen.getByLabelText(/^Email$/i)).toHaveValue('team.annaba@example.com')
+      expect(screen.getByLabelText(/^Email$/i)).toHaveValue(
+        'team.annaba@example.com',
+      )
       expect(screen.getByLabelText(/Confirmation de l'email/i)).toHaveValue(
         'team.annaba@example.com',
       )
@@ -523,7 +585,8 @@ describe('BookingShell flow', () => {
 
   it('keeps the captcha token hidden while showing a verification-ready state', async () => {
     seedStore(4)
-    const conditionLabel = 'Je confirme que les donnees du demandeur sont exactes.'
+    const conditionLabel =
+      'Je confirme que les donnees du demandeur sont exactes.'
 
     mockAvailability = {
       ...createMockAvailability(),
@@ -550,13 +613,15 @@ describe('BookingShell flow', () => {
     renderBookingShell()
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Verification completee/i).length).toBeGreaterThan(0)
+      expect(
+        screen.getAllByText(/Vérification complétée/i).length,
+      ).toBeGreaterThan(0)
     })
     expect(
       screen.queryByLabelText(/Jeton g-recaptcha-response/i),
     ).not.toBeInTheDocument()
     expect(
-      screen.getByText(/cliquez simplement sur 'Repasser la verification'/i),
+      screen.getByText(/cliquez simplement sur 'Repasser la vérification'/i),
     ).toBeInTheDocument()
   })
 
@@ -585,9 +650,7 @@ describe('BookingShell flow', () => {
     await user.click(screen.getByRole('button', { name: '6' }))
 
     await waitFor(() => {
-      expect(
-        screen.getByLabelText(/Heure de rendez-vous/i),
-      ).toBeInTheDocument()
+      expect(screen.getByLabelText(/Heure de rendez-vous/i)).toBeInTheDocument()
     })
   })
 
@@ -617,5 +680,31 @@ describe('BookingShell flow', () => {
     expect(hourSelect).toHaveValue('8:00 AM')
     expect(screen.getAllByText('8:00 AM').length).toBeGreaterThan(0)
   })
-
+  it('opens the invalid traveller tab when continuation is blocked', async () => {
+    seedStore(2)
+    useBookingStore.setState((state) => ({
+      draft: {
+        ...state.draft,
+        nbTravellers: 2,
+        travellers: [
+          ...state.draft.travellers,
+          {
+            ...createEmptyBookingDraft().travellers[0],
+            id: 'second-traveller',
+          },
+        ],
+      },
+    }))
+    const user = userEvent.setup()
+    renderBookingShell()
+    await user.click(screen.getByRole('button', { name: /continuer/i }))
+    await waitFor(() =>
+      expect(screen.getByRole('tab', { name: /Voyageur 2/i })).toHaveAttribute(
+        'aria-selected',
+        'true',
+      ),
+    )
+    expect(useBookingStore.getState().currentStep).toBe(2)
+    expect(bookingClient.submitBooking).not.toHaveBeenCalled()
+  })
 })

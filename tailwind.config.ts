@@ -43,11 +43,11 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       fontFamily: {
-        sans: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        display: ['Manrope', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        sans: ['Segoe UI', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        display: ['Segoe UI', 'ui-sans-serif', 'system-ui', 'sans-serif'],
       },
       boxShadow: {
-        glow: '0 18px 44px rgba(15, 23, 42, 0.08)',
+        glow: 'none',
       },
       backgroundImage: {
         'mesh-warm':

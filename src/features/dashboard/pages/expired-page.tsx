@@ -39,28 +39,20 @@ export function ExpiredPage({
 
   if (allRecords.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Aucune demande expiree</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2 text-foreground">
-            <AlertTriangle className="h-4 w-4" />
-            Les dossiers vieux de 30 jours ou plus apparaitront ici.
-          </div>
-          <p>
-            Quand un dossier devient ancien, vous pourrez recharger toutes les
-            informations et refaire uniquement les etapes sensibles comme le
-            reCAPTCHA et le choix du rendez-vous.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="empty-state">
+        <AlertTriangle size={28} aria-hidden="true" />
+        <h2>Aucune demande expirée</h2>
+        <p>
+          Les dossiers de plus de 30 jours apparaîtront ici. Leur relance
+          conserve les données et renouvelle le rendez-vous et la vérification.
+        </p>
+      </div>
     )
   }
 
   return (
     <div className="space-y-4">
-      <Card className="border-amber-200/80 bg-amber-50/45">
+      <Card className="expired-toolbar">
         <CardContent className="flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1 text-sm text-amber-950">
             <p className="font-semibold">
@@ -68,22 +60,24 @@ export function ExpiredPage({
               revoir
             </p>
             <p>
-              Le bouton de relance recharge le dossier, puis vous laisse refaire
-              uniquement le rendez-vous et le reCAPTCHA.
+              Réutilisez les informations, puis vérifiez le rendez-vous et le
+              reCAPTCHA.
             </p>
             {testModeEnabled ? (
               <p className="text-amber-900/90">
-                Mode test actif: les demandes recentes apparaissent aussi ici pour
-                tester la re-demande sans attendre 30 jours.
+                Mode test actif: les demandes recentes apparaissent aussi ici
+                pour tester la re-demande sans attendre 30 jours.
               </p>
             ) : null}
           </div>
-          <label className="flex items-center gap-3 rounded-xl border border-amber-200/80 bg-white/80 px-3 py-2 text-sm text-foreground">
+          <label className="flex items-center gap-3 rounded-md border border-amber-200/80 bg-white/80 px-3 py-2 text-sm text-foreground">
             <Checkbox
               checked={testModeEnabled}
-              onCheckedChange={(checked) => setTestModeEnabled(Boolean(checked))}
+              onCheckedChange={(checked) =>
+                setTestModeEnabled(Boolean(checked))
+              }
             />
-            Tester la re-demande sans attendre 30 jours
+            Inclure les demandes récentes (test)
           </label>
         </CardContent>
       </Card>
@@ -91,7 +85,7 @@ export function ExpiredPage({
       {visibleRecords.length === 0 ? (
         <Card>
           <CardHeader>
-            <CardTitle>Aucune demande expiree pour le moment</CardTitle>
+            <CardTitle>Aucune demande expirée pour le moment</CardTitle>
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>

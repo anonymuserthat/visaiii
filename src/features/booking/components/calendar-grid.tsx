@@ -104,11 +104,11 @@ export function CalendarGrid({
   }, [anchorDay])
 
   return (
-    <div className="rounded-3xl border border-border/80 bg-slate-50/85 p-4">
+    <div className="rounded-md border border-border/80 bg-slate-50/85 p-4">
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <CalendarDays className="h-5 w-5 text-primary" />
-          <span className="text-xl font-semibold text-foreground">
+          <span className="text-base font-semibold text-foreground">
             {formatMonthLabel(cursor)}
           </span>
         </div>
@@ -117,6 +117,7 @@ export function CalendarGrid({
             type="button"
             variant="secondary"
             size="icon"
+            aria-label="Mois précédent"
             disabled={!canGoPreviousMonth}
             onClick={() => setCursor((value) => addMonths(value, -1))}
           >
@@ -126,6 +127,7 @@ export function CalendarGrid({
             type="button"
             variant="secondary"
             size="icon"
+            aria-label="Mois suivant"
             disabled={!canGoNextMonth}
             onClick={() => setCursor((value) => addMonths(value, 1))}
           >
@@ -147,26 +149,26 @@ export function CalendarGrid({
           const iso = toIsoDay(day)
           const outsideRange =
             isBefore(day, minDate) || (maxDate ? isAfter(day, maxDate) : false)
-          const disabledByAvailability =
-            !hasAvailabilityData
-              ? true
-              : unavailableDaySet.size > 0
-                ? unavailableDaySet.has(iso)
-                : availableDaySet.size > 0
-                  ? !availableDaySet.has(iso)
-                  : true
-          const disabled =
-            outsideRange || disabledByAvailability
+          const disabledByAvailability = !hasAvailabilityData
+            ? true
+            : unavailableDaySet.size > 0
+              ? unavailableDaySet.has(iso)
+              : availableDaySet.size > 0
+                ? !availableDaySet.has(iso)
+                : true
+          const disabled = outsideRange || disabledByAvailability
           const selected = selectedDay === iso
 
           return (
             <button
               key={iso}
               type="button"
+              aria-pressed={selected}
+              title={format(day, 'd MMMM yyyy', { locale: fr })}
               disabled={disabled}
               onClick={() => onSelect(iso)}
               className={cn(
-                'h-11 rounded-xl border border-transparent px-2 text-sm transition-colors',
+                'h-9 rounded-md border border-transparent px-2 text-sm transition-colors',
                 selected
                   ? 'border-primary bg-primary text-primary-foreground'
                   : 'bg-white text-foreground hover:border-border hover:bg-slate-100',

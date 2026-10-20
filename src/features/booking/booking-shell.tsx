@@ -5,6 +5,7 @@ import { useForm, useWatch, type FieldErrors, type Path } from 'react-hook-form'
 import { Download, FileUp, LoaderCircle, RefreshCcw } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { bookingClient } from '@/lib/api/bookingClient'
@@ -48,7 +49,10 @@ import {
   createEmptyBookingDraft,
   createEmptyTraveller,
 } from '@/lib/state/defaults'
-import { createBookingSchema, getStepFieldPaths } from '@/lib/validation/bookingSchemas'
+import {
+  createBookingSchema,
+  getStepFieldPaths,
+} from '@/lib/validation/bookingSchemas'
 import {
   useAvailableSlotsQuery,
   useUnavailableDaysQuery,
@@ -107,15 +111,15 @@ function getStepFromErrorPath(path: Path<BookingFormValues>): 1 | 2 | 3 | 4 {
 
 function getInvalidSubmissionMessage(path: Path<BookingFormValues> | null) {
   if (!path) {
-    return 'Certains champs doivent etre corriges avant la soumission.'
+    return 'Certains champs doivent être corrigés avant la soumission.'
   }
 
   if (path === 'cgv') {
-    return 'Acceptez les conditions generales avant de soumettre.'
+    return 'Acceptez les conditions générales avant de soumettre.'
   }
 
   if (path === 'appointment.captchaToken') {
-    return 'Completez la verification reCAPTCHA avant de soumettre.'
+    return 'Complétez la vérification reCAPTCHA avant de soumettre.'
   }
 
   if (path.startsWith('appointment.queueConditions.')) {
@@ -127,14 +131,14 @@ function getInvalidSubmissionMessage(path: Path<BookingFormValues> | null) {
   }
 
   if (path.startsWith('travellers.')) {
-    return 'Certaines informations voyageurs doivent etre corrigees avant la soumission.'
+    return 'Certaines informations voyageurs doivent être corrigées avant la soumission.'
   }
 
   if (path.startsWith('optionalServices.')) {
-    return 'Completez les options requises avant la soumission.'
+    return 'Complétez les options requises avant la soumission.'
   }
 
-  return 'Certains champs doivent etre corriges avant la soumission.'
+  return 'Certains champs doivent être corrigés avant la soumission.'
 }
 
 function hasDraftContent(values: BookingFormValues) {
@@ -163,28 +167,29 @@ function hasDraftContent(values: BookingFormValues) {
     return true
   }
 
-  return values.travellers.some((traveller) =>
-    [
-      traveller.title,
-      traveller.lastname,
-      traveller.firstname,
-      traveller.dayBirth,
-      traveller.monthBirth,
-      traveller.yearBirth,
-      traveller.phone,
-      traveller.email,
-      traveller.emailConfirm,
-      traveller.passportNumber,
-      traveller.dayDepartureDate,
-      traveller.monthDepartureDate,
-      traveller.yearDepartureDate,
-      traveller.visaStayDuration,
-      traveller.travelPurpose,
-      traveller.typeVisa,
-      traveller.precision1,
-      traveller.precision2,
-      traveller.visaFileVariation,
-    ].some(Boolean) ||
+  return values.travellers.some(
+    (traveller) =>
+      [
+        traveller.title,
+        traveller.lastname,
+        traveller.firstname,
+        traveller.dayBirth,
+        traveller.monthBirth,
+        traveller.yearBirth,
+        traveller.phone,
+        traveller.email,
+        traveller.emailConfirm,
+        traveller.passportNumber,
+        traveller.dayDepartureDate,
+        traveller.monthDepartureDate,
+        traveller.yearDepartureDate,
+        traveller.visaStayDuration,
+        traveller.travelPurpose,
+        traveller.typeVisa,
+        traveller.precision1,
+        traveller.precision2,
+        traveller.visaFileVariation,
+      ].some(Boolean) ||
       traveller.renewal ||
       traveller.followSms ||
       traveller.franceVisasAssistance,
@@ -215,9 +220,7 @@ function extractQueryMessage(error: unknown, fallback: string) {
 
 function isSelectedDayStillAvailable(
   selectedDay: string,
-  availability: NonNullable<
-    ReturnType<typeof useUnavailableDaysQuery>['data']
-  >,
+  availability: NonNullable<ReturnType<typeof useUnavailableDaysQuery>['data']>,
 ) {
   if (!selectedDay) {
     return true
@@ -241,11 +244,17 @@ function isSelectedDayStillAvailable(
     }
   }
 
-  if (availability.firstDay && normalizedSelectedDay < normalizeIsoDayString(availability.firstDay)) {
+  if (
+    availability.firstDay &&
+    normalizedSelectedDay < normalizeIsoDayString(availability.firstDay)
+  ) {
     return false
   }
 
-  if (availability.lastDay && normalizedSelectedDay > normalizeIsoDayString(availability.lastDay)) {
+  if (
+    availability.lastDay &&
+    normalizedSelectedDay > normalizeIsoDayString(availability.lastDay)
+  ) {
     return false
   }
 
@@ -256,9 +265,7 @@ interface BookingShellProps {
   currentUser?: CurrentUserProfile | null
 }
 
-export function BookingShell({
-  currentUser = null,
-}: BookingShellProps) {
+export function BookingShell({ currentUser = null }: BookingShellProps) {
   const queryClient = useQueryClient()
   const {
     globalParamsQuery,
@@ -268,23 +275,45 @@ export function BookingShell({
     visaTypesQuery,
   } = useBookingBootstrap()
   const currentStep = useBookingStore((state) => state.currentStep)
+  const previousStepRef = useRef(currentStep)
+  useEffect(() => {
+    if (previousStepRef.current !== currentStep) {
+      previousStepRef.current = currentStep
+      const heading = document.querySelector<HTMLElement>('.workflow-form h2')
+      if (heading) {
+        heading.tabIndex = -1
+        heading.focus({ preventScroll: true })
+        heading.scrollIntoView?.({ block: 'nearest' })
+      }
+    }
+  }, [currentStep])
   const completedSteps = useBookingStore((state) => state.completedSteps)
   const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
   const markStepCompleted = useBookingStore((state) => state.markStepCompleted)
   const hydrateDraft = useBookingStore((state) => state.hydrateDraft)
   const resetDraft = useBookingStore((state) => state.resetDraft)
-  const setSelectedCenterId = useBookingStore((state) => state.setSelectedCenterId)
+  const setSelectedCenterId = useBookingStore(
+    (state) => state.setSelectedCenterId,
+  )
   const selectedCenterId = useBookingStore((state) => state.selectedCenterId)
   const globalParams = useBookingStore((state) => state.globalParams)
   const socialTitles = useBookingStore((state) => state.socialTitles)
-  const visaFileVariations = useBookingStore((state) => state.visaFileVariations)
+  const visaFileVariations = useBookingStore(
+    (state) => state.visaFileVariations,
+  )
   const services = useBookingStore((state) => state.services)
   const visaTypes = useBookingStore((state) => state.visaTypes)
   const currentCenter = useBookingStore(selectCurrentCenter)
   const setAvailability = useBookingStore((state) => state.setAvailability)
-  const setSubmissionFailure = useBookingStore((state) => state.setSubmissionFailure)
-  const setSubmissionStatus = useBookingStore((state) => state.setSubmissionStatus)
-  const setSubmissionSuccess = useBookingStore((state) => state.setSubmissionSuccess)
+  const setSubmissionFailure = useBookingStore(
+    (state) => state.setSubmissionFailure,
+  )
+  const setSubmissionStatus = useBookingStore(
+    (state) => state.setSubmissionStatus,
+  )
+  const setSubmissionSuccess = useBookingStore(
+    (state) => state.setSubmissionSuccess,
+  )
   const clearSubmission = useBookingStore((state) => state.clearSubmission)
   const submissionStatus = useBookingStore((state) => state.submissionStatus)
   const lastSuccess = useBookingStore((state) => state.lastSuccess)
@@ -293,12 +322,17 @@ export function BookingShell({
   const formSeedRef = useRef<BookingFormValues>(
     applyBookingDraftDefaults(useBookingStore.getState().draft),
   )
-  const previousAreaRef = useRef<string | null>(formSeedRef.current.area || null)
+  const previousAreaRef = useRef<string | null>(
+    formSeedRef.current.area || null,
+  )
   const lastPersistedDraftRef = useRef(JSON.stringify(formSeedRef.current))
   const latestSessionIdRef = useRef('')
+  const [activeTravellerIndex, setActiveTravellerIndex] = useState(0)
+  const [resetRequested, setResetRequested] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<string>('')
   const [verificationOpening, setVerificationOpening] = useState(false)
-  const [captchaSettings, setCaptchaSettings] = useState<CaptchaSettings | null>(null)
+  const [captchaSettings, setCaptchaSettings] =
+    useState<CaptchaSettings | null>(null)
   const [solvingCaptcha, setSolvingCaptcha] = useState(false)
   const submittingRef = useRef(false)
   const automaticCaptcha = canSolveAutomatically(captchaSettings)
@@ -330,7 +364,8 @@ export function BookingShell({
   } = form
 
   const liveValues =
-    (useWatch({ control }) as BookingFormValues | undefined) ?? formSeedRef.current
+    (useWatch({ control }) as BookingFormValues | undefined) ??
+    formSeedRef.current
   const visibleServices = services.filter((service) =>
     liveValues.formula ? service.formulas.includes(liveValues.formula) : true,
   )
@@ -373,7 +408,7 @@ export function BookingShell({
     .map((error) => (error instanceof Error ? error.message : String(error)))
   const availabilityErrorMessage = extractQueryMessage(
     availabilityQuery.error,
-    'Impossible de charger les disponibilites Capago.',
+    'Impossible de charger les disponibilités Capago.',
   )
   const slotsErrorMessage = extractQueryMessage(
     slotsQuery.error,
@@ -406,7 +441,10 @@ export function BookingShell({
       void bookingClient
         .loadDraft()
         .then((storedDraft) => {
-          if (!storedDraft || storedDraft.version !== RUNTIME_CONFIG.draftVersion) {
+          if (
+            !storedDraft ||
+            storedDraft.version !== RUNTIME_CONFIG.draftVersion
+          ) {
             return
           }
 
@@ -417,7 +455,7 @@ export function BookingShell({
           lastPersistedDraftRef.current = JSON.stringify(storedDraft.values)
           hydrateDraft(normalizedDraft)
           reset(normalizedDraft)
-          toast.success('Brouillon restaure')
+          toast.success('Brouillon restauré')
         })
         .catch((error) => {
           console.error(error)
@@ -436,7 +474,7 @@ export function BookingShell({
         shouldValidate: true,
       })
       setVerificationOpening(false)
-      toast.success("Jeton reCAPTCHA recupere dans l'app.")
+      toast.success("Jeton reCAPTCHA récupéré dans l'app.")
     }).then((unlisten) => {
       if (isDisposed) {
         unlisten?.()
@@ -459,7 +497,10 @@ export function BookingShell({
   }, [liveValues.area, selectedCenterId, setValue])
 
   useEffect(() => {
-    const expectedTravellerCount = Math.max(1, Number(liveValues.nbTravellers) || 1)
+    const expectedTravellerCount = Math.max(
+      1,
+      Number(liveValues.nbTravellers) || 1,
+    )
     const currentTravellerCount = liveValues.travellers.length
 
     if (currentTravellerCount === expectedTravellerCount) {
@@ -472,7 +513,8 @@ export function BookingShell({
             ...liveValues.travellers,
             ...Array.from(
               { length: expectedTravellerCount - currentTravellerCount },
-              (_, offset) => createEmptyTraveller(currentTravellerCount + offset),
+              (_, offset) =>
+                createEmptyTraveller(currentTravellerCount + offset),
             ),
           ]
         : liveValues.travellers.slice(0, expectedTravellerCount)
@@ -514,7 +556,9 @@ export function BookingShell({
 
     liveValues.travellers.forEach((traveller, index) => {
       if (traveller.visaStayDuration) {
-        setValue(`travellers.${index}.visaStayDuration`, '', { shouldDirty: true })
+        setValue(`travellers.${index}.visaStayDuration`, '', {
+          shouldDirty: true,
+        })
       }
       if (traveller.travelPurpose) {
         setValue(`travellers.${index}.travelPurpose`, '', { shouldDirty: true })
@@ -550,7 +594,9 @@ export function BookingShell({
     }
 
     if (!liveValues.optionalServices.portrait) {
-      setValue('optionalServices.portrait', 'no_portrait', { shouldDirty: false })
+      setValue('optionalServices.portrait', 'no_portrait', {
+        shouldDirty: false,
+      })
     }
 
     if (!liveValues.optionalServices.deliveryVisa) {
@@ -564,7 +610,10 @@ export function BookingShell({
       !liveValues.optionalServices.deliveryContact.lastname &&
       primaryTraveller.lastname
     ) {
-      setValue('optionalServices.deliveryContact.lastname', primaryTraveller.lastname)
+      setValue(
+        'optionalServices.deliveryContact.lastname',
+        primaryTraveller.lastname,
+      )
     }
 
     if (
@@ -572,7 +621,10 @@ export function BookingShell({
       !liveValues.optionalServices.deliveryContact.firstname &&
       primaryTraveller.firstname
     ) {
-      setValue('optionalServices.deliveryContact.firstname', primaryTraveller.firstname)
+      setValue(
+        'optionalServices.deliveryContact.firstname',
+        primaryTraveller.firstname,
+      )
     }
 
     if (
@@ -750,7 +802,21 @@ export function BookingShell({
       getStepFieldPaths(currentStep, getValues(), services),
     )
     if (!isValid) {
-      toast.error('Certains champs doivent etre corriges avant de continuer.')
+      if (currentStep === 2) {
+        const invalidPath = getStepFieldPaths(2, getValues(), services).find(
+          (path) => form.getFieldState(path).invalid,
+        )
+        const index = Number(invalidPath?.match(/^travellers\.(\d+)/)?.[1] ?? 0)
+        setActiveTravellerIndex(index)
+        window.requestAnimationFrame(() =>
+          document
+            .querySelector<HTMLElement>(
+              `#traveller-panel-${index} [aria-invalid="true"]`,
+            )
+            ?.focus(),
+        )
+      }
+      toast.error('Certains champs doivent être corrigés avant de continuer.')
       return
     }
 
@@ -764,12 +830,20 @@ export function BookingShell({
   }
 
   async function handleExport() {
-    await exportDraftJson({
-      version: RUNTIME_CONFIG.draftVersion,
-      updatedAt: new Date().toISOString(),
-      values: getValues(),
-    })
-    toast.success('Brouillon exporte')
+    try {
+      const exported = await exportDraftJson({
+        version: RUNTIME_CONFIG.draftVersion,
+        updatedAt: new Date().toISOString(),
+        values: getValues(),
+      })
+      if (exported) toast.success('Brouillon exporté')
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Export du brouillon impossible.',
+      )
+    }
   }
 
   async function handleImport() {
@@ -779,6 +853,13 @@ export function BookingShell({
         return
       }
 
+      if (
+        imported.version !== RUNTIME_CONFIG.draftVersion ||
+        !imported.values ||
+        !Array.isArray(imported.values.travellers)
+      ) {
+        throw new Error('Ce fichier n’est pas un brouillon compatible.')
+      }
       const normalizedDraft = applyBookingDraftDefaults(imported.values)
 
       formSeedRef.current = normalizedDraft
@@ -786,10 +867,12 @@ export function BookingShell({
       lastPersistedDraftRef.current = JSON.stringify(imported.values)
       hydrateDraft(normalizedDraft)
       reset(normalizedDraft)
-      toast.success('Brouillon importe')
+      toast.success('Brouillon importé')
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Import du brouillon impossible.',
+        error instanceof Error
+          ? error.message
+          : 'Import du brouillon impossible.',
       )
     }
   }
@@ -802,7 +885,7 @@ export function BookingShell({
     resetDraft()
     reset(fresh)
     clearSubmission()
-    toast.success('Brouillon reinitialise')
+    toast.success('Brouillon réinitialisé')
     await recordAudit('draft_reset', 'Brouillon remis a zero')
   }
 
@@ -812,7 +895,7 @@ export function BookingShell({
       toast.error("Renseignez d'abord l'utilisateur actif avant de soumettre.")
       await recordAudit(
         'submit_blocked',
-        "Soumission bloquee: utilisateur actif non renseigne",
+        'Soumission bloquee: utilisateur actif non renseigne',
       )
       return
     }
@@ -830,14 +913,23 @@ export function BookingShell({
         setSolvingCaptcha(true)
         try {
           const token = await solveCaptcha()
-          values = { ...values, appointment: { ...values.appointment, captchaToken: token } }
+          values = {
+            ...values,
+            appointment: { ...values.appointment, captchaToken: token },
+          }
         } catch (reason) {
           const message = String(reason)
           setError('appointment.captchaToken', { type: 'solver', message })
-          setSubmissionFailure({ status: 0, fieldErrors: [], rawMessages: [message] })
+          setSubmissionFailure({
+            status: 0,
+            fieldErrors: [],
+            rawMessages: [message],
+          })
           toast.error(message)
           return
-        } finally { setSolvingCaptcha(false) }
+        } finally {
+          setSolvingCaptcha(false)
+        }
       }
 
       const payload = buildBookingPayload(
@@ -879,22 +971,26 @@ export function BookingShell({
 
         if (savedRecord.databaseSyncStatus === 'database_failed') {
           toast.warning(
-            "Soumission acceptee. Le dossier reste disponible dans l'historique.",
+            "Soumission acceptée. Le dossier reste disponible dans l'historique.",
           )
         } else {
-          toast.success("Soumission acceptee et ajoutee a l'historique.")
+          toast.success("Soumission acceptée et ajoutée a l'historique.")
         }
       } catch (error) {
         console.error(error)
         toast.warning(
-          "Soumission acceptee, mais le dossier n'a pas pu etre ajoute a l'historique.",
+          "Soumission acceptée, mais le dossier n'a pas pu être ajoute a l'historique.",
         )
       }
 
       await recordAudit('submit_success', `Statut ${result.status}`)
     } catch (reason) {
       const message = String(reason)
-      setSubmissionFailure({ status: 0, fieldErrors: [], rawMessages: [message] })
+      setSubmissionFailure({
+        status: 0,
+        fieldErrors: [],
+        rawMessages: [message],
+      })
       toast.error(message)
     } finally {
       // Tokens are single-use; never reuse one after an attempted submission.
@@ -905,9 +1001,13 @@ export function BookingShell({
 
   async function onInvalidSubmit(submitErrors: FieldErrors<BookingFormValues>) {
     const firstInvalidPath = flattenErrorPaths(submitErrors)[0] ?? null
-    const blockedStep = firstInvalidPath ? getStepFromErrorPath(firstInvalidPath) : 4
+    const blockedStep = firstInvalidPath
+      ? getStepFromErrorPath(firstInvalidPath)
+      : 4
 
     setSubmissionStatus('idle')
+    if (firstInvalidPath?.startsWith('travellers.'))
+      setActiveTravellerIndex(Number(firstInvalidPath.split('.')[1]))
 
     if (blockedStep !== currentStep) {
       setCurrentStep(blockedStep)
@@ -926,41 +1026,66 @@ export function BookingShell({
       <Card>
         <CardContent className="flex items-center gap-3 py-10 text-muted-foreground">
           <LoaderCircle className="h-5 w-5 animate-spin" />
-          Initialisation des parametres, centres et listes dynamiques...
+          Initialisation des paramètres, centres et listes dynamiques...
         </CardContent>
       </Card>
     )
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="space-y-4">
-        <Stepper currentStep={currentStep} completedSteps={completedSteps} />
+    <div className="booking-workspace">
+      <div className="booking-main">
+        <Stepper
+          currentStep={currentStep}
+          completedSteps={completedSteps}
+          onStepSelect={(step) => {
+            if (step < currentStep || completedSteps.includes(step))
+              setCurrentStep(step)
+          }}
+        />
 
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-white px-4 py-3">
+        <div className="draft-toolbar">
           <div>
-            <p className="text-sm font-semibold text-foreground">Brouillon local</p>
+            <p className="draft-label">
+              Brouillon local <span>· enregistré sur cet appareil</span>
+            </p>
             <p className="text-sm text-muted-foreground">
-              {lastSavedAt ? `Derniere sauvegarde a ${lastSavedAt}` : 'Autosauvegarde active'}
+              {lastSavedAt
+                ? `Derniere sauvegarde a ${lastSavedAt}`
+                : 'Autosauvegarde active'}
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="secondary" onClick={handleExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Exporter JSON
-            </Button>
-            <Button type="button" variant="secondary" onClick={handleImport}>
-              <FileUp className="mr-2 h-4 w-4" />
-              Importer JSON
-            </Button>
-            <Button type="button" variant="ghost" onClick={handleResetDraft}>
-              <RefreshCcw className="mr-2 h-4 w-4" />
-              Reinitialiser
-            </Button>
-          </div>
+          <details className="data-menu">
+            <summary>Données du dossier</summary>
+            <div className="data-menu-actions">
+              <Button type="button" variant="secondary" onClick={handleExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Exporter JSON
+              </Button>
+              <Button type="button" variant="secondary" onClick={handleImport}>
+                <FileUp className="mr-2 h-4 w-4" />
+                Importer JSON
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setResetRequested(true)}
+              >
+                <RefreshCcw className="mr-2 h-4 w-4" />
+                Réinitialiser
+              </Button>
+            </div>
+          </details>
         </div>
 
-        <ServerErrorPanel messages={[...bootstrapError, ...rawServerErrors]} />
+        <ServerErrorPanel
+          messages={[...bootstrapError, ...rawServerErrors]}
+          onRetry={
+            bootstrapError.length
+              ? () => void queryClient.invalidateQueries()
+              : undefined
+          }
+        />
 
         {submissionStatus === 'success' ? (
           <SubmissionSuccess
@@ -973,7 +1098,10 @@ export function BookingShell({
           />
         ) : null}
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}>
+        <form
+          className="workflow-form"
+          onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}
+        >
           {currentStep === 1 ? (
             <Step1Setup
               control={control}
@@ -987,6 +1115,8 @@ export function BookingShell({
 
           {currentStep === 2 ? (
             <Step2Travellers
+              activeTraveller={activeTravellerIndex}
+              onTravellerSelect={setActiveTravellerIndex}
               control={control}
               errors={errors}
               values={liveValues}
@@ -1052,7 +1182,7 @@ export function BookingShell({
                   .catch((error) => {
                     console.error(error)
                     toast.error(
-                      "Impossible d'ouvrir la verification integree. Reessayez.",
+                      "Impossible d'ouvrir la vérification intégrée. Réessayez.",
                     )
                   })
                   .finally(() => {
@@ -1067,7 +1197,10 @@ export function BookingShell({
             />
           ) : null}
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="workflow-footer">
+            <span className="text-xs text-muted-foreground">
+              Étape {currentStep} / 4 · Données conservées entre les étapes
+            </span>
             <Button
               type="button"
               variant="secondary"
@@ -1087,7 +1220,9 @@ export function BookingShell({
                 disabled={isSubmitting || submissionStatus === 'submitting'}
               >
                 {isSubmitting || submissionStatus === 'submitting'
-                  ? solvingCaptcha ? 'Resolution du CAPTCHA...' : 'Soumission...'
+                  ? solvingCaptcha
+                    ? 'Résolution du CAPTCHA...'
+                    : 'Soumission...'
                   : 'Soumettre la demande'}
               </Button>
             )}
@@ -1095,15 +1230,36 @@ export function BookingShell({
         </form>
       </div>
 
-      <SummaryPanel
-        values={liveValues}
-        currentCenter={currentCenter}
-        currentStep={currentStep}
-        completedSteps={completedSteps}
-        socialTitles={socialTitles}
-        visaFileVariations={visaFileVariations}
-        visaTypes={visaTypes}
-      />
+      <details className="dossier-review">
+        <summary>
+          Vérification du dossier{' '}
+          <span>
+            {liveValues.travellers.length} voyageur(s) ·{' '}
+            {currentCenter?.city ?? 'Centre à choisir'}
+          </span>
+        </summary>
+        <SummaryPanel
+          values={liveValues}
+          currentCenter={currentCenter}
+          currentStep={currentStep}
+          completedSteps={completedSteps}
+          socialTitles={socialTitles}
+          visaFileVariations={visaFileVariations}
+          visaTypes={visaTypes}
+        />
+      </details>
+      {resetRequested ? (
+        <ConfirmDialog
+          title="Réinitialiser le brouillon ?"
+          description="Les informations de la demande en cours seront effacées. Les dossiers de l’historique restent conservés."
+          confirmLabel="Réinitialiser le brouillon"
+          onCancel={() => setResetRequested(false)}
+          onConfirm={() => {
+            setResetRequested(false)
+            void handleResetDraft()
+          }}
+        />
+      ) : null}
     </div>
   )
 }

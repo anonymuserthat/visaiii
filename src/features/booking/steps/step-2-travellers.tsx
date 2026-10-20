@@ -4,7 +4,13 @@ import {
   type FieldErrors,
   type UseFormSetValue,
 } from 'react-hook-form'
-import { AlertTriangle, FileCheck2, Mail, Phone, PlaneTakeoff } from 'lucide-react'
+import {
+  AlertTriangle,
+  FileCheck2,
+  Mail,
+  Phone,
+  PlaneTakeoff,
+} from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -34,7 +40,11 @@ function buildNumericOptions(
   const values: Array<{ value: string; label: string }> = []
   const step = start <= end ? 1 : -1
 
-  for (let current = start; step > 0 ? current <= end : current >= end; current += step) {
+  for (
+    let current = start;
+    step > 0 ? current <= end : current >= end;
+    current += step
+  ) {
     const value = String(current).padStart(padLength, '0')
     values.push({ value, label: value })
   }
@@ -52,7 +62,11 @@ function normalizeSelectValue(value: string, padLength: number) {
 
 const DAY_OPTIONS = buildNumericOptions(1, 31)
 const MONTH_OPTIONS = buildNumericOptions(1, 12)
-const BIRTH_YEAR_OPTIONS = buildNumericOptions(CURRENT_YEAR, CURRENT_YEAR - 100, 4)
+const BIRTH_YEAR_OPTIONS = buildNumericOptions(
+  CURRENT_YEAR,
+  CURRENT_YEAR - 100,
+  4,
+)
 const DEPARTURE_YEAR_OPTIONS = buildNumericOptions(
   CURRENT_YEAR,
   CURRENT_YEAR + 2,
@@ -60,6 +74,8 @@ const DEPARTURE_YEAR_OPTIONS = buildNumericOptions(
 )
 
 interface Step2TravellersProps {
+  activeTraveller: number
+  onTravellerSelect: (index: number) => void
   control: Control<BookingFormValues>
   errors: FieldErrors<BookingFormValues>
   values: BookingFormValues
@@ -80,6 +96,8 @@ function messageFor(
 }
 
 export function Step2Travellers({
+  activeTraveller,
+  onTravellerSelect,
   control,
   errors,
   values,
@@ -90,14 +108,20 @@ export function Step2Travellers({
   setValue,
   showSmsSelection,
 }: Step2TravellersProps) {
+  const selectedTraveller = Math.min(
+    activeTraveller,
+    values.travellers.length - 1,
+  )
   const titleOptions = socialTitles.map((title) => ({
     value: title.id,
     label: title.label,
   }))
-  const stayDurationOptions = selectStayDurations(visaTypes).map((duration) => ({
-    value: duration.id,
-    label: duration.label,
-  }))
+  const stayDurationOptions = selectStayDurations(visaTypes).map(
+    (duration) => ({
+      value: duration.id,
+      label: duration.label,
+    }),
+  )
   const fileVariationOptions = visaFileVariations.map((variation) => ({
     value: variation.id,
     label: variation.label,
@@ -107,7 +131,44 @@ export function Step2Travellers({
   )
 
   return (
-    <div className="space-y-5">
+    <div className="traveller-workspace">
+      <div
+        className="traveller-tabs"
+        role="tablist"
+        aria-label="Voyageurs du dossier"
+      >
+        {values.travellers.map((traveller, index) => (
+          <button
+            key={traveller.id}
+            type="button"
+            role="tab"
+            id={`traveller-tab-${index}`}
+            aria-selected={selectedTraveller === index}
+            aria-controls={`traveller-panel-${index}`}
+            tabIndex={selectedTraveller === index ? 0 : -1}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
+                event.preventDefault()
+                const next =
+                  (index +
+                    (event.key === 'ArrowRight' ? 1 : -1) +
+                    values.travellers.length) %
+                  values.travellers.length
+                onTravellerSelect(next)
+                document.getElementById(`traveller-tab-${next}`)?.focus()
+              }
+            }}
+            onClick={() => onTravellerSelect(index)}
+          >
+            <span>{String(index + 1).padStart(2, '0')}</span>
+            {traveller.firstname || `Voyageur ${index + 1}`}
+            {index === 0 ? <small>Principal</small> : null}
+            {errors.travellers?.[index] ? (
+              <small className="text-destructive">À corriger</small>
+            ) : null}
+          </button>
+        ))}
+      </div>
       {values.travellers.map((traveller, index) => {
         const productLineOptions = selectProductLines(
           visaTypes,
@@ -142,14 +203,21 @@ export function Step2Travellers({
         )
 
         return (
-          <Card key={traveller.id}>
+          <Card
+            key={traveller.id}
+            role="tabpanel"
+            id={`traveller-panel-${index}`}
+            aria-labelledby={`traveller-tab-${index}`}
+            hidden={selectedTraveller !== index}
+            className="traveller-panel"
+          >
             <CardHeader className="pb-3">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                 <div>
                   <CardTitle>Voyageur {index + 1}</CardTitle>
                   <p className="text-sm text-muted-foreground">
                     {index === 0
-                      ? 'Contact principal pour le telephone mobile et les emails.'
+                      ? 'Contact principal pour le téléphone mobile et les emails.'
                       : 'Renseignez les informations exactement comme sur le passeport.'}
                   </p>
                 </div>
@@ -158,7 +226,7 @@ export function Step2Travellers({
                     control={control}
                     name={`travellers.${index}.followSms`}
                     render={({ field }) => (
-                      <label className="flex items-center gap-3 rounded-full border border-border/70 bg-slate-50 px-4 py-2 text-sm font-medium text-foreground">
+                      <label className="flex items-center gap-2 text-xs text-foreground">
                         <Checkbox
                           checked={field.value}
                           onCheckedChange={(checked) =>
@@ -199,30 +267,39 @@ export function Step2Travellers({
                   <Controller
                     control={control}
                     name={`travellers.${index}.lastname`}
-                    render={({ field }) => <Input aria-label="Nom" {...field} />}
+                    render={({ field }) => (
+                      <Input aria-label="Nom" {...field} />
+                    )}
                   />
                 </FormField>
                 <FormField
-                  label="Prenom(s)"
+                  label="Prénom(s)"
                   error={messageFor(errors, index, 'firstname')}
                 >
                   <Controller
                     control={control}
                     name={`travellers.${index}.firstname`}
-                    render={({ field }) => <Input aria-label="Prenom" {...field} />}
+                    render={({ field }) => (
+                      <Input aria-label="Prénom" {...field} />
+                    )}
                   />
                 </FormField>
               </div>
 
-              <div className="rounded-3xl border border-border/70 bg-slate-50/85 p-4">
-                <div className="mb-4">
-                  <p className="font-semibold text-foreground">Date de naissance</p>
+              <div className="traveller-field-section">
+                <div className="mb-2">
+                  <p className="font-semibold text-foreground">
+                    Date de naissance
+                  </p>
                   <p className="text-sm text-muted-foreground">
-                    Saisissez jour, mois, annee.
+                    Jour, mois et année de naissance.
                   </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-3">
-                  <FormField label="Jour" error={messageFor(errors, index, 'dayBirth')}>
+                  <FormField
+                    label="Jour"
+                    error={messageFor(errors, index, 'dayBirth')}
+                  >
                     <Controller
                       control={control}
                       name={`travellers.${index}.dayBirth`}
@@ -237,7 +314,10 @@ export function Step2Travellers({
                       )}
                     />
                   </FormField>
-                  <FormField label="Mois" error={messageFor(errors, index, 'monthBirth')}>
+                  <FormField
+                    label="Mois"
+                    error={messageFor(errors, index, 'monthBirth')}
+                  >
                     <Controller
                       control={control}
                       name={`travellers.${index}.monthBirth`}
@@ -252,13 +332,16 @@ export function Step2Travellers({
                       )}
                     />
                   </FormField>
-                  <FormField label="Annee" error={messageFor(errors, index, 'yearBirth')}>
+                  <FormField
+                    label="Année"
+                    error={messageFor(errors, index, 'yearBirth')}
+                  >
                     <Controller
                       control={control}
                       name={`travellers.${index}.yearBirth`}
                       render={({ field }) => (
                         <Select
-                          aria-label="Annee de naissance"
+                          aria-label="Année de naissance"
                           value={normalizeSelectValue(field.value, 4)}
                           options={BIRTH_YEAR_OPTIONS}
                           placeholder="- -"
@@ -273,7 +356,7 @@ export function Step2Travellers({
               {index === 0 ? (
                 <div className="grid gap-4 md:grid-cols-3">
                   <FormField
-                    label="Numero de telephone mobile"
+                    label="Numéro de téléphone mobile"
                     hint="Requis"
                     error={messageFor(errors, index, 'phone')}
                   >
@@ -284,7 +367,7 @@ export function Step2Travellers({
                         <div className="relative">
                           <Phone className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
                           <Input
-                            aria-label="Numero de telephone mobile"
+                            aria-label="Numéro de téléphone mobile"
                             className="pl-10"
                             inputMode="tel"
                             {...field}
@@ -293,14 +376,23 @@ export function Step2Travellers({
                       )}
                     />
                   </FormField>
-                  <FormField label="Email" hint="Requis" error={messageFor(errors, index, 'email')}>
+                  <FormField
+                    label="Email"
+                    hint="Requis"
+                    error={messageFor(errors, index, 'email')}
+                  >
                     <Controller
                       control={control}
                       name={`travellers.${index}.email`}
                       render={({ field }) => (
                         <div className="relative">
                           <Mail className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" />
-                          <Input aria-label="Email" className="pl-10" type="email" {...field} />
+                          <Input
+                            aria-label="Email"
+                            className="pl-10"
+                            type="email"
+                            {...field}
+                          />
                         </div>
                       )}
                     />
@@ -328,14 +420,14 @@ export function Step2Travellers({
               <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
                 <div className="space-y-4">
                   <FormField
-                    label="Numero du passeport"
+                    label="Numéro du passeport"
                     error={messageFor(errors, index, 'passportNumber')}
                   >
                     <Controller
                       control={control}
                       name={`travellers.${index}.passportNumber`}
                       render={({ field }) => (
-                        <Input aria-label="Numero du passeport" {...field} />
+                        <Input aria-label="Numéro du passeport" {...field} />
                       )}
                     />
                   </FormField>
@@ -345,7 +437,7 @@ export function Step2Travellers({
                       control={control}
                       name={`travellers.${index}.franceVisasAssistance`}
                       render={({ field }) => (
-                        <label className="flex items-start gap-3 rounded-2xl border border-border/70 bg-white px-4 py-3 text-sm text-foreground">
+                        <label className="flex items-start gap-3 rounded-md border border-border/70 bg-white px-4 py-3 text-sm text-foreground">
                           <Checkbox
                             checked={field.value}
                             onCheckedChange={(checked) =>
@@ -358,7 +450,8 @@ export function Step2Travellers({
                               Assistance France-Visas
                             </span>
                             <span className="mt-1 block text-muted-foreground">
-                              Accompagnement Capago pour le formulaire France-Visas.
+                              Accompagnement Capago pour le formulaire
+                              France-Visas.
                             </span>
                           </span>
                         </label>
@@ -367,11 +460,13 @@ export function Step2Travellers({
                   ) : null}
                 </div>
 
-                <div className="rounded-3xl border border-border/70 bg-slate-50/85 p-4">
-                  <div className="mb-4">
-                    <p className="font-semibold text-foreground">Date de depart</p>
+                <div className="traveller-field-section">
+                  <div className="mb-2">
+                    <p className="font-semibold text-foreground">
+                      Date de départ
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      Indiquez la date estimee de depart.
+                      Indiquez la date estimee de départ.
                     </p>
                   </div>
                   <div className="grid gap-4 md:grid-cols-3">
@@ -384,7 +479,7 @@ export function Step2Travellers({
                         name={`travellers.${index}.dayDepartureDate`}
                         render={({ field }) => (
                           <Select
-                            aria-label="Jour de depart"
+                            aria-label="Jour de départ"
                             value={normalizeSelectValue(field.value, 2)}
                             options={DAY_OPTIONS}
                             placeholder="- -"
@@ -402,7 +497,7 @@ export function Step2Travellers({
                         name={`travellers.${index}.monthDepartureDate`}
                         render={({ field }) => (
                           <Select
-                            aria-label="Mois de depart"
+                            aria-label="Mois de départ"
                             value={normalizeSelectValue(field.value, 2)}
                             options={MONTH_OPTIONS}
                             placeholder="- -"
@@ -412,7 +507,7 @@ export function Step2Travellers({
                       />
                     </FormField>
                     <FormField
-                      label="Annee"
+                      label="Année"
                       error={messageFor(errors, index, 'yearDepartureDate')}
                     >
                       <Controller
@@ -420,7 +515,7 @@ export function Step2Travellers({
                         name={`travellers.${index}.yearDepartureDate`}
                         render={({ field }) => (
                           <Select
-                            aria-label="Annee de depart"
+                            aria-label="Année de départ"
                             value={normalizeSelectValue(field.value, 4)}
                             options={DEPARTURE_YEAR_OPTIONS}
                             placeholder="- -"
@@ -433,17 +528,17 @@ export function Step2Travellers({
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-border/70 bg-slate-50 p-4">
-                <div className="mb-4 flex items-center gap-2">
+              <div className="traveller-visa-section">
+                <div className="mb-3 flex items-center gap-2">
                   <PlaneTakeoff className="h-4 w-4 text-primary" />
                   <p className="font-semibold text-foreground">
-                    Selection dynamique du visa
+                    Sélection dynamique du visa
                   </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2">
                   <FormField
-                    label="Type de visa demande"
-                    hint="Selectionnez la duree de sejour."
+                    label="Type de visa demandé"
+                    hint="Sélectionnez la duree de séjour."
                     error={messageFor(errors, index, 'visaStayDuration')}
                   >
                     <Controller
@@ -451,7 +546,7 @@ export function Step2Travellers({
                       name={`travellers.${index}.visaStayDuration`}
                       render={({ field }) => (
                         <Select
-                          aria-label="Type de visa demande"
+                          aria-label="Type de visa demandé"
                           value={field.value}
                           options={stayDurationOptions}
                           placeholder="- -"
@@ -461,7 +556,10 @@ export function Step2Travellers({
                             setValue(`travellers.${index}.typeVisa`, '')
                             setValue(`travellers.${index}.precision1`, '')
                             setValue(`travellers.${index}.precision2`, '')
-                            setValue(`travellers.${index}.visaFileVariation`, '')
+                            setValue(
+                              `travellers.${index}.visaFileVariation`,
+                              '',
+                            )
                             setValue(`travellers.${index}.renewal`, false)
                           }}
                         />
@@ -470,7 +568,7 @@ export function Step2Travellers({
                   </FormField>
                   <FormField
                     label="Votre projet"
-                    hint="Precisez les raisons qui motivent votre voyage."
+                    hint="Précisez les raisons qui motivent votre voyage."
                     error={messageFor(errors, index, 'travelPurpose')}
                   >
                     <Controller
@@ -487,7 +585,10 @@ export function Step2Travellers({
                             setValue(`travellers.${index}.typeVisa`, '')
                             setValue(`travellers.${index}.precision1`, '')
                             setValue(`travellers.${index}.precision2`, '')
-                            setValue(`travellers.${index}.visaFileVariation`, '')
+                            setValue(
+                              `travellers.${index}.visaFileVariation`,
+                              '',
+                            )
                             setValue(`travellers.${index}.renewal`, false)
                           }}
                         />
@@ -495,8 +596,8 @@ export function Step2Travellers({
                     />
                   </FormField>
                   <FormField
-                    label="Motif principal du sejour"
-                    hint="Selectionnez le motif principal de votre voyage."
+                    label="Motif principal du séjour"
+                    hint="Sélectionnez le motif principal de votre voyage."
                     error={messageFor(errors, index, 'typeVisa')}
                   >
                     <Controller
@@ -504,7 +605,7 @@ export function Step2Travellers({
                       name={`travellers.${index}.typeVisa`}
                       render={({ field }) => (
                         <Select
-                          aria-label="Motif principal du sejour"
+                          aria-label="Motif principal du séjour"
                           value={field.value}
                           options={visaTypeOptions.map((item) => ({
                             value: item.id,
@@ -515,7 +616,10 @@ export function Step2Travellers({
                             field.onChange(event)
                             setValue(`travellers.${index}.precision1`, '')
                             setValue(`travellers.${index}.precision2`, '')
-                            setValue(`travellers.${index}.visaFileVariation`, '')
+                            setValue(
+                              `travellers.${index}.visaFileVariation`,
+                              '',
+                            )
                             setValue(`travellers.${index}.renewal`, false)
                           }}
                         />
@@ -546,7 +650,7 @@ export function Step2Travellers({
                   </FormField>
                   <FormField
                     label="Situation du demandeur"
-                    hint="Selectionnez votre situation."
+                    hint="Sélectionnez votre situation."
                     error={messageFor(errors, index, 'precision2')}
                   >
                     <Controller
@@ -564,15 +668,15 @@ export function Step2Travellers({
                     />
                   </FormField>
                   {selectedVisaType?.visaFileVariationRequired ? (
-                    <div className="md:col-span-2 rounded-2xl border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
+                    <div className="md:col-span-2 rounded-md border border-amber-200 bg-amber-50/60 px-4 py-3 text-sm text-amber-900">
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                         <div className="space-y-1">
                           <p className="font-medium">Veuillez noter :</p>
                           <p>
-                            Si vous ne remplissez pas les conditions requises pour la
-                            categorie selectionnee, votre rendez-vous pourra etre
-                            annule sans remboursement.
+                            Si vous ne remplissez pas les conditions requises
+                            pour la categorie sélectionnée, votre rendez-vous
+                            pourra être annule sans remboursement.
                           </p>
                         </div>
                       </div>
@@ -580,7 +684,7 @@ export function Step2Travellers({
                   ) : null}
                   <FormField
                     label="Categorie du demandeur"
-                    hint="Laissez vide pour primo_demand si aucune categorie specifique ne s'applique."
+                    hint="Laissez vide si aucune catégorie spécifique ne s’applique."
                     error={messageFor(errors, index, 'visaFileVariation')}
                   >
                     <Controller
@@ -603,16 +707,16 @@ export function Step2Travellers({
                     />
                   </FormField>
                   {selectedVisaFileVariation?.description ? (
-                    <div className="md:col-span-2 rounded-2xl border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
+                    <div className="md:col-span-2 rounded-md border border-border/70 bg-white px-4 py-3 text-sm text-muted-foreground">
                       {selectedVisaFileVariation.description}
                     </div>
                   ) : null}
                 </div>
-                </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+              </div>
+            </CardContent>
+          </Card>
+        )
+      })}
     </div>
   )
 }

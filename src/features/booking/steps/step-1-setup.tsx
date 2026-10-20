@@ -1,11 +1,20 @@
-import { Controller, type Control, type FieldErrors, type UseFormSetValue } from 'react-hook-form'
-import { Check, Crown, FileText, ShieldCheck, Sparkles } from 'lucide-react'
+import {
+  Controller,
+  type Control,
+  type FieldErrors,
+  type UseFormSetValue,
+} from 'react-hook-form'
+import { Check, Crown, FileText } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import type { BookingFormValues, CapagoCenter, GlobalParams } from '@/lib/api/types'
+import type {
+  BookingFormValues,
+  CapagoCenter,
+  GlobalParams,
+} from '@/lib/api/types'
 import { openExternalUrl } from '@/lib/persistence/external'
 import { CenterCard } from '@/features/booking/components/center-card'
 import { FormField } from '@/features/booking/components/form-field'
@@ -43,12 +52,12 @@ export function Step1Setup({
   ].filter(Boolean)
 
   return (
-    <div className="space-y-4">
+    <div className="setup-layout">
       <Card>
         <CardHeader>
-          <CardTitle>Choisissez le centre et la formule</CardTitle>
+          <CardTitle>Centre de dépôt</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Le centre pilote automatiquement les services et les visas charges.
+            Les catégories de visa et les services dépendent du centre choisi.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -59,7 +68,10 @@ export function Step1Setup({
                 center={center}
                 selected={values.area === center.id}
                 onSelect={() => {
-                  setValue('area', center.id, { shouldDirty: true, shouldValidate: true })
+                  setValue('area', center.id, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
                 }}
               />
             ))}
@@ -67,20 +79,21 @@ export function Step1Setup({
           {errors.area?.message ? (
             <p className="text-sm text-red-600">{errors.area.message}</p>
           ) : null}
-          <div className="grid gap-4 md:grid-cols-2">
+          <h3 className="form-section-title">Formule de rendez-vous</h3>
+          <div className="formula-options">
             {[
               {
                 value: 'standard',
                 title: 'Standard',
                 description:
-                  'Parcours classique avec options supplementaires au besoin.',
+                  'Parcours classique. Services supplémentaires au choix.',
                 icon: FileText,
               },
               {
                 value: 'premium',
                 title: 'Premium',
                 description:
-                  'Met en avant les services inclus selon les parametres distants.',
+                  'Services inclus selon les informations du centre.',
                 icon: Crown,
               },
             ].map((formula) => {
@@ -90,31 +103,29 @@ export function Step1Setup({
                 <button
                   key={formula.value}
                   type="button"
+                  aria-pressed={isSelected}
                   className={cn(
-                    'rounded-xl border px-3 py-3 text-left transition-colors',
+                    'formula-option',
                     isSelected
                       ? 'border-primary/30 bg-primary/5'
                       : 'border-border/80 bg-white hover:border-primary/20',
                   )}
                   onClick={() =>
-                    setValue('formula', formula.value as BookingFormValues['formula'], {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
+                    setValue(
+                      'formula',
+                      formula.value as BookingFormValues['formula'],
+                      {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      },
+                    )
                   }
                 >
-                  <div className="mb-3 flex items-center justify-between">
-                    <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                      {formula.title}
-                    </span>
-                    <Icon className="h-5 w-5 text-primary" />
+                  <Icon className="h-4 w-4 text-primary" aria-hidden="true" />
+                  <div>
+                    <strong>{formula.title}</strong>
+                    <p>{formula.description}</p>
                   </div>
-                  <p className="font-display text-xl font-semibold text-foreground">
-                    {formula.title}
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {formula.description}
-                  </p>
                   {formula.value === 'premium' ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {includedPremiumItems.map((item) => (
@@ -148,43 +159,26 @@ export function Step1Setup({
                     aria-label="Nombre de voyageurs"
                     value={String(field.value)}
                     options={travellerOptions}
-                    onChange={(event) => field.onChange(Number(event.target.value))}
+                    onChange={(event) =>
+                      field.onChange(Number(event.target.value))
+                    }
                   />
                 )}
               />
             </FormField>
-            <div className="rounded-xl border border-border/60 bg-slate-50 px-3 py-3 text-foreground">
-              <div className="mb-2 flex items-center gap-2 text-muted-foreground">
-                <Sparkles className="h-4 w-4" />
-                <span className="text-xs uppercase tracking-[0.18em]">
-                  Rappel produit
-                </span>
-              </div>
-              <p className="text-sm text-muted-foreground">
-                La formule premium suit les options incluses annoncees par les
-                parametres globaux. Le centre reste selectionnable a tout moment
-                et recharge les dependances en direct.
-              </p>
-            </div>
+            <p className="self-center text-xs text-muted-foreground">
+              Chaque voyageur dispose de sa propre fiche. Les informations
+              restent modifiables avant l’envoi.
+            </p>
           </div>
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
-          <CardTitle>Conditions et informations utiles</CardTitle>
+          <CardTitle>Conditions générales</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg border border-border/60 bg-slate-50 px-3 py-3 text-sm text-foreground">
-            <div className="flex items-center gap-2 font-semibold">
-              <ShieldCheck className="h-4 w-4" />
-              Verification humaine preservee
-            </div>
-            <p className="mt-1 text-muted-foreground">
-              L&apos;application prepare les etapes 1 a 4, mais ne contourne
-              jamais le reCAPTCHA.
-            </p>
-          </div>
           <Controller
             control={control}
             name="cgv"
@@ -192,20 +186,23 @@ export function Step1Setup({
               <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-slate-50 px-3 py-3">
                 <Checkbox
                   checked={field.value}
-                  onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                  onCheckedChange={(checked) =>
+                    field.onChange(Boolean(checked))
+                  }
                   id="cgv"
                 />
                 <div className="space-y-1">
-                  <Label htmlFor="cgv" className="text-base">
-                    J&apos;accepte les conditions generales
+                  <Label htmlFor="cgv" className="text-sm">
+                    J&apos;accepte les conditions générales
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Ouvrez le document officiel si vous souhaitez le relire avant
-                    de continuer.
+                    Ouvrez le document officiel si vous souhaitez le relire
+                    avant de continuer.
                   </p>
                   <button
                     type="button"
                     className="inline-flex items-center gap-2 text-sm font-semibold text-primary"
+                    disabled={!globalParams?.termsAndConditionsUrl}
                     onClick={() => {
                       if (globalParams?.termsAndConditionsUrl) {
                         void openExternalUrl(globalParams.termsAndConditionsUrl)

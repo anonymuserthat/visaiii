@@ -5,7 +5,14 @@ import {
   type FieldErrors,
   type UseFormSetValue,
 } from 'react-hook-form'
-import { Clock3, Home, ImageIcon, MessageSquare, Receipt, Shield } from 'lucide-react'
+import {
+  Clock3,
+  Home,
+  ImageIcon,
+  MessageSquare,
+  Receipt,
+  Shield,
+} from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,10 +36,7 @@ interface Step3ServicesProps {
   setValue: UseFormSetValue<BookingFormValues>
 }
 
-function optionalError(
-  errors: FieldErrors<BookingFormValues>,
-  path: string[],
-) {
+function optionalError(errors: FieldErrors<BookingFormValues>, path: string[]) {
   let cursor: unknown = errors.optionalServices
   for (const key of path) {
     if (!cursor || typeof cursor !== 'object') {
@@ -61,9 +65,9 @@ function ServiceRadioCard({
   children: ReactNode
 }) {
   return (
-    <div className="rounded-3xl border border-border/80 bg-white p-4">
-      <div className="mb-4 flex items-center gap-2">
-        <div className="rounded-full bg-slate-100 p-2 text-primary">{icon}</div>
+    <section className="service-section">
+      <div className="service-heading">
+        <div className="text-primary">{icon}</div>
         <div>
           <p className="font-semibold text-foreground">{title}</p>
           {description ? (
@@ -71,8 +75,8 @@ function ServiceRadioCard({
           ) : null}
         </div>
       </div>
-      {children}
-    </div>
+      <div className="service-controls">{children}</div>
+    </section>
   )
 }
 
@@ -93,7 +97,8 @@ function getTravellerSmsLabel(
 
   if (index === 0) {
     return `Voyageur ${index + 1} - Contact principal : ${
-      [titleLabel, fullName].filter(Boolean).join(' ') || 'Coordonnees principales'
+      [titleLabel, fullName].filter(Boolean).join(' ') ||
+      'Coordonnées principales'
     }`
   }
 
@@ -125,31 +130,31 @@ export function Step3Services({
     <div className="space-y-5">
       <Card>
         <CardHeader>
-          <CardTitle>Documents importants et services</CardTitle>
+          <CardTitle>Services du dossier</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Cette etape reprend la logique Capago pour la photo, la livraison,
-            le suivi SMS et la facture.
+            Sélectionnez les prestations proposées pour votre centre et votre
+            formule.
           </p>
         </CardHeader>
         <CardContent className="grid gap-4">
           {visibility.primeTime ? (
             <ServiceRadioCard
               icon={<Clock3 className="h-4 w-4" />}
-              title="Creneau Prime Time"
+              title="Créneau Prime Time"
               description={findService('prime_time')?.description}
             >
               <Controller
                 control={control}
                 name="optionalServices.primeTimeAppointment"
                 render={({ field }) => (
-                  <label className="flex items-start gap-3 rounded-2xl border border-border/70 bg-slate-50 px-4 py-3 text-sm font-medium text-foreground">
+                  <label className="flex items-start gap-3 rounded-md border border-border/70 bg-slate-50 px-4 py-3 text-sm font-medium text-foreground">
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={(checked) =>
                         field.onChange(Boolean(checked))
                       }
                     />
-                    Deposer le dossier sur un creneau Prime Time si disponible.
+                    Deposer le dossier sur un créneau Prime Time si disponible.
                   </label>
                 )}
               />
@@ -175,14 +180,14 @@ export function Step3Services({
                       onValueChange={field.onChange}
                       className="grid gap-3 md:grid-cols-2"
                     >
-                      <label className="flex items-start gap-3 rounded-2xl border border-border bg-slate-50 px-4 py-3">
+                      <label className="flex items-start gap-3 rounded-md border border-border bg-slate-50 px-4 py-3">
                         <RadioGroupItem value="yes_portrait" />
                         <span>
                           Oui, je souhaite realiser mes photos directement au
                           centre.
                         </span>
                       </label>
-                      <label className="flex items-start gap-3 rounded-2xl border border-border bg-white px-4 py-3">
+                      <label className="flex items-start gap-3 rounded-md border border-border bg-white px-4 py-3">
                         <RadioGroupItem value="no_portrait" />
                         <span>Non, je fournirai mes propres photos.</span>
                       </label>
@@ -200,7 +205,7 @@ export function Step3Services({
               description={findService('insurance')?.description}
             >
               <FormField
-                label="Souhaitez-vous etre rappele par un assureur ?"
+                label="Souhaitez-vous être rappele par un assureur ?"
                 error={optionalError(errors, ['relation'])}
               >
                 <Controller
@@ -212,11 +217,11 @@ export function Step3Services({
                       onValueChange={field.onChange}
                       className="grid gap-3 md:grid-cols-2"
                     >
-                      <label className="flex items-center gap-3 rounded-2xl border border-border bg-slate-50 px-4 py-3">
+                      <label className="flex items-center gap-3 rounded-md border border-border bg-slate-50 px-4 py-3">
                         <RadioGroupItem value="yes_relation" />
-                        Oui, etre rappele
+                        Oui, être rappele
                       </label>
-                      <label className="flex items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3">
+                      <label className="flex items-center gap-3 rounded-md border border-border bg-white px-4 py-3">
                         <RadioGroupItem value="no_relation" />
                         Non merci
                       </label>
@@ -246,11 +251,11 @@ export function Step3Services({
                       onValueChange={field.onChange}
                       className="grid gap-3 md:grid-cols-2"
                     >
-                      <label className="flex items-start gap-3 rounded-2xl border border-border bg-slate-50 px-4 py-3">
+                      <label className="flex items-start gap-3 rounded-md border border-border bg-slate-50 px-4 py-3">
                         <RadioGroupItem value="home_delivery" />
                         <span>Livraison a domicile ou au travail</span>
                       </label>
-                      <label className="flex items-start gap-3 rounded-2xl border border-border bg-white px-4 py-3">
+                      <label className="flex items-start gap-3 rounded-md border border-border bg-white px-4 py-3">
                         <RadioGroupItem value="me_delivery" />
                         <span>Retrait au centre</span>
                       </label>
@@ -280,7 +285,10 @@ export function Step3Services({
                   </FormField>
                   <FormField
                     label="Nom du contact"
-                    error={optionalError(errors, ['deliveryContact', 'lastname'])}
+                    error={optionalError(errors, [
+                      'deliveryContact',
+                      'lastname',
+                    ])}
                   >
                     <Controller
                       control={control}
@@ -291,25 +299,33 @@ export function Step3Services({
                     />
                   </FormField>
                   <FormField
-                    label="Prenom du contact"
-                    error={optionalError(errors, ['deliveryContact', 'firstname'])}
+                    label="Prénom du contact"
+                    error={optionalError(errors, [
+                      'deliveryContact',
+                      'firstname',
+                    ])}
                   >
                     <Controller
                       control={control}
                       name="optionalServices.deliveryContact.firstname"
                       render={({ field }) => (
-                        <Input aria-label="Prenom du contact" {...field} />
+                        <Input aria-label="Prénom du contact" {...field} />
                       )}
                     />
                   </FormField>
                   <FormField
                     label="Adresse"
-                    error={optionalError(errors, ['deliveryContact', 'address'])}
+                    error={optionalError(errors, [
+                      'deliveryContact',
+                      'address',
+                    ])}
                   >
                     <Controller
                       control={control}
                       name="optionalServices.deliveryContact.address"
-                      render={({ field }) => <Input aria-label="Adresse" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="Adresse" {...field} />
+                      )}
                     />
                   </FormField>
                   <FormField
@@ -319,7 +335,9 @@ export function Step3Services({
                     <Controller
                       control={control}
                       name="optionalServices.deliveryContact.zip"
-                      render={({ field }) => <Input aria-label="Code postal" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="Code postal" {...field} />
+                      )}
                     />
                   </FormField>
                   <FormField
@@ -329,7 +347,9 @@ export function Step3Services({
                     <Controller
                       control={control}
                       name="optionalServices.deliveryContact.city"
-                      render={({ field }) => <Input aria-label="Ville" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="Ville" {...field} />
+                      )}
                     />
                   </FormField>
                 </div>
@@ -347,7 +367,7 @@ export function Step3Services({
                 control={control}
                 name="optionalServices.followSms"
                 render={({ field }) => (
-                  <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-slate-50 px-4 py-3 text-sm font-medium text-foreground">
+                  <label className="flex items-center gap-3 rounded-md border border-border/70 bg-slate-50 px-4 py-3 text-sm font-medium text-foreground">
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={(checked) => {
@@ -362,28 +382,36 @@ export function Step3Services({
                           return
                         }
 
-                        if (!values.travellers.some((traveller) => traveller.followSms)) {
+                        if (
+                          !values.travellers.some(
+                            (traveller) => traveller.followSms,
+                          )
+                        ) {
                           setValue('travellers.0.followSms', true, {
                             shouldDirty: true,
                           })
                         }
                       }}
                     />
-                    Recevoir des notifications sur mon telephone
+                    Recevoir des notifications sur mon téléphone
                   </label>
                 )}
               />
               {values.optionalServices.followSms ? (
                 <div className="mt-4 grid gap-4">
                   <FormField
-                    label="Numero mobile SMS"
+                    label="Numéro mobile SMS"
                     error={optionalError(errors, ['smsMobile'])}
                   >
                     <Controller
                       control={control}
                       name="optionalServices.smsMobile"
                       render={({ field }) => (
-                        <Input aria-label="Numero mobile SMS" inputMode="tel" {...field} />
+                        <Input
+                          aria-label="Numéro mobile SMS"
+                          inputMode="tel"
+                          {...field}
+                        />
                       )}
                     />
                   </FormField>
@@ -397,14 +425,18 @@ export function Step3Services({
                         control={control}
                         name={`travellers.${index}.followSms`}
                         render={({ field }) => (
-                          <label className="flex items-center gap-3 rounded-2xl border border-border bg-white px-4 py-3 text-sm text-foreground">
+                          <label className="flex items-center gap-3 rounded-md border border-border bg-white px-4 py-3 text-sm text-foreground">
                             <Checkbox
                               checked={field.value}
                               onCheckedChange={(checked) =>
                                 field.onChange(Boolean(checked))
                               }
                             />
-                            {getTravellerSmsLabel(traveller, index, socialTitles)}
+                            {getTravellerSmsLabel(
+                              traveller,
+                              index,
+                              socialTitles,
+                            )}
                           </label>
                         )}
                       />
@@ -425,10 +457,12 @@ export function Step3Services({
                 control={control}
                 name="optionalServices.invoiceEmail"
                 render={({ field }) => (
-                  <label className="flex items-center gap-3 rounded-2xl border border-border/70 bg-slate-50 px-4 py-3 text-sm font-medium text-foreground">
+                  <label className="flex items-center gap-3 rounded-md border border-border/70 bg-slate-50 px-4 py-3 text-sm font-medium text-foreground">
                     <Checkbox
                       checked={field.value}
-                      onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                      onCheckedChange={(checked) =>
+                        field.onChange(Boolean(checked))
+                      }
                     />
                     Recevoir par email une facture au nom de mon entreprise
                   </label>
@@ -443,7 +477,9 @@ export function Step3Services({
                     <Controller
                       control={control}
                       name="optionalServices.invoiceContact.society"
-                      render={({ field }) => <Input aria-label="Societe" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="Societe" {...field} />
+                      )}
                     />
                   </FormField>
                   <FormField
@@ -453,7 +489,9 @@ export function Step3Services({
                     <Controller
                       control={control}
                       name="optionalServices.invoiceContact.tva"
-                      render={({ field }) => <Input aria-label="TVA" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="TVA" {...field} />
+                      )}
                     />
                   </FormField>
                   <FormField
@@ -463,7 +501,9 @@ export function Step3Services({
                     <Controller
                       control={control}
                       name="optionalServices.invoiceContact.address"
-                      render={({ field }) => <Input aria-label="Adresse" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="Adresse" {...field} />
+                      )}
                     />
                   </FormField>
                   <FormField
@@ -473,7 +513,9 @@ export function Step3Services({
                     <Controller
                       control={control}
                       name="optionalServices.invoiceContact.zip"
-                      render={({ field }) => <Input aria-label="Code postal" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="Code postal" {...field} />
+                      )}
                     />
                   </FormField>
                   <FormField
@@ -483,7 +525,9 @@ export function Step3Services({
                     <Controller
                       control={control}
                       name="optionalServices.invoiceContact.city"
-                      render={({ field }) => <Input aria-label="Ville" {...field} />}
+                      render={({ field }) => (
+                        <Input aria-label="Ville" {...field} />
+                      )}
                     />
                   </FormField>
                 </div>

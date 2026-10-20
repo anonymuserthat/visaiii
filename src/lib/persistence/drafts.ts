@@ -15,7 +15,7 @@ export async function exportDraftJson(draft: StoredBookingDraft) {
     link.download = 'damander-visa-draft.json'
     link.click()
     URL.revokeObjectURL(url)
-    return
+    return true
   }
 
   const filePath = await save({
@@ -24,10 +24,11 @@ export async function exportDraftJson(draft: StoredBookingDraft) {
   })
 
   if (!filePath) {
-    return
+    return false
   }
 
   await writeTextFile(filePath, payload)
+  return true
 }
 
 export async function importDraftJson() {

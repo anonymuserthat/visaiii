@@ -35,7 +35,9 @@ export function DatabaseConnectionCard() {
   async function refresh() {
     await Promise.all([
       refetch(),
-      queryClient.invalidateQueries({ queryKey: bookingQueryKeys.requestRecords }),
+      queryClient.invalidateQueries({
+        queryKey: bookingQueryKeys.requestRecords,
+      }),
     ])
   }
 
@@ -50,7 +52,9 @@ export function DatabaseConnectionCard() {
       setUrl('')
       setIsEditing(false)
       await refresh()
-      toast.success('Connexion a la base partagee etablie. Historique actualise.')
+      toast.success(
+        'Connexion a la base partagee etablie. Historique actualise.',
+      )
     } catch (error) {
       toast.error('Impossible de se connecter : ' + errorMessage(error))
     } finally {
@@ -59,7 +63,11 @@ export function DatabaseConnectionCard() {
   }
 
   async function clear() {
-    if (!window.confirm('Supprimer la configuration de cette base sur ce PC ? Les dossiers locaux seront conserves.')) {
+    if (
+      !window.confirm(
+        'Supprimer la configuration de cette base sur ce PC ? Les dossiers locaux seront conserves.',
+      )
+    ) {
       return
     }
     setSaving(true)
@@ -67,7 +75,9 @@ export function DatabaseConnectionCard() {
       await bookingClient.clearDatabaseConfiguration()
       setUrl('')
       await refresh()
-      toast.success('Configuration locale retiree. Les dossiers restent sauvegardes.')
+      toast.success(
+        'Configuration locale retiree. Les dossiers restent sauvegardes.',
+      )
     } catch (error) {
       toast.error(errorMessage(error))
     } finally {
@@ -90,24 +100,56 @@ export function DatabaseConnectionCard() {
           )}
           Base de donnees partagee
         </div>
-        <div role="status" aria-live="polite" className="space-y-1 text-xs text-muted-foreground">
-          <p className={connected ? 'font-medium text-emerald-800' : 'font-medium text-amber-800'}>
-            {isPending ? 'Verification en cours…' : connected ? 'Connectee' : 'Deconnectee / non configuree'}
+        <div
+          role="status"
+          aria-live="polite"
+          className="space-y-1 text-xs text-muted-foreground"
+        >
+          <p
+            className={
+              connected
+                ? 'font-medium text-emerald-800'
+                : 'font-medium text-amber-800'
+            }
+          >
+            {isPending
+              ? 'Vérification en cours…'
+              : connected
+                ? 'Connectee'
+                : 'Deconnectee / non configuree'}
           </p>
-          <p className="break-words">{data?.message ?? 'Verifiez les parametres de la connexion.'}</p>
+          <p className="break-words">
+            {data?.message ?? 'Verifiez les paramètres de la connexion.'}
+          </p>
           {data ? (
             <p>
-              {data.remoteCount === null ? 'Serveur non disponible' : `${data.remoteCount} dossier(s) sur le serveur`}
-              {' · '}{data.localCount} dossier(s) en cache local
-              {data.pendingCount > 0 ? ` · ${data.pendingCount} en attente de synchronisation` : ''}
+              {data.remoteCount === null
+                ? 'Serveur non disponible'
+                : `${data.remoteCount} dossier(s) sur le serveur`}
+              {' · '}
+              {data.localCount} dossier(s) en cache local
+              {data.pendingCount > 0
+                ? ` · ${data.pendingCount} en attente de synchronisation`
+                : ''}
             </p>
           ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="secondary" type="button" disabled={saving || isFetching} onClick={() => void refresh()}>
+          <Button
+            size="sm"
+            variant="secondary"
+            type="button"
+            disabled={saving || isFetching}
+            onClick={() => void refresh()}
+          >
             <RefreshCw className="mr-1 h-3.5 w-3.5" /> Actualiser
           </Button>
-          <Button size="sm" variant="outline" type="button" onClick={() => setIsEditing((v) => !v)}>
+          <Button
+            size="sm"
+            variant="outline"
+            type="button"
+            onClick={() => setIsEditing((v) => !v)}
+          >
             <Settings2 className="mr-1 h-3.5 w-3.5" /> Configurer
           </Button>
         </div>
@@ -126,14 +168,26 @@ export function DatabaseConnectionCard() {
               onChange={(event) => setUrl(event.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              Saisissez l'URL fournie par l'administrateur. La valeur existante n'est pas affichee.
-              La nouvelle connexion est testee avant d'etre enregistree sur cet ordinateur.
+              Saisissez l'URL fournie par l'administrateur. La valeur existante
+              n'est pas affichee. La nouvelle connexion est testee avant d'être
+              enregistrée sur cet ordinateur.
             </p>
-            <Button size="sm" type="button" disabled={saving} onClick={() => void save()}>
+            <Button
+              size="sm"
+              type="button"
+              disabled={saving}
+              onClick={() => void save()}
+            >
               {saving ? 'Test de connexion…' : 'Tester et enregistrer'}
             </Button>
             {data?.configured ? (
-              <Button size="sm" variant="ghost" type="button" disabled={saving} onClick={() => void clear()}>
+              <Button
+                size="sm"
+                variant="ghost"
+                type="button"
+                disabled={saving}
+                onClick={() => void clear()}
+              >
                 Retirer la configuration locale
               </Button>
             ) : null}

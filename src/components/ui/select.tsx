@@ -8,8 +8,7 @@ export interface SelectOption {
   label: string
 }
 
-interface SelectProps
-  extends Omit<React.ComponentProps<'select'>, 'children'> {
+interface SelectProps extends Omit<React.ComponentProps<'select'>, 'children'> {
   options: SelectOption[]
   placeholder?: string
 }
@@ -25,7 +24,7 @@ export function Select({
     <div className="relative">
       <select
         className={cn(
-          'flex h-9 w-full appearance-none rounded-lg border border-border/70 bg-white px-3 py-2 pr-9 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-9 w-full appearance-none rounded-md border border-border/70 bg-white px-3 py-2 pr-9 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
           className,
         )}
         value={value}

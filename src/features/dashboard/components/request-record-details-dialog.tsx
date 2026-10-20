@@ -50,7 +50,10 @@ interface DetailItem {
   wide?: boolean
 }
 
-function valueOrFallback(value: string | null | undefined, fallback = 'Non renseigne') {
+function valueOrFallback(
+  value: string | null | undefined,
+  fallback = 'Non renseigne',
+) {
   const normalized = value?.trim()
   return normalized ? normalized : fallback
 }
@@ -85,11 +88,14 @@ function formatTitleLabel(value: string, socialTitles: SocialTitle[]) {
   return matched?.shortLabel ?? matched?.label ?? value
 }
 
-function formatContactName(input: {
-  title?: string
-  firstname?: string
-  lastname?: string
-}, socialTitles: SocialTitle[]) {
+function formatContactName(
+  input: {
+    title?: string
+    firstname?: string
+    lastname?: string
+  },
+  socialTitles: SocialTitle[],
+) {
   return [
     formatTitleLabel(input.title ?? '', socialTitles),
     input.firstname,
@@ -163,7 +169,7 @@ function getOptionalServiceRows(values: BookingFormValues): DetailItem[] {
     },
     optional.followSms
       ? {
-          label: 'Numero SMS',
+          label: 'Numéro SMS',
           value: optional.smsMobile,
         }
       : null,
@@ -174,7 +180,10 @@ function getOptionalServiceRows(values: BookingFormValues): DetailItem[] {
   ].filter(Boolean) as DetailItem[]
 }
 
-function getAppointmentRows(values: BookingFormValues, record: StoredRequestRecord) {
+function getAppointmentRows(
+  values: BookingFormValues,
+  record: StoredRequestRecord,
+) {
   const appointment = values.appointment
   const selectedDate =
     appointment.dateSubmit || appointment.date || record.appointmentDate || ''
@@ -216,7 +225,7 @@ function getAppointmentRows(values: BookingFormValues, record: StoredRequestReco
     },
     {
       label: 'reCAPTCHA',
-      value: appointment.captchaToken ? 'Jeton present' : 'Non enregistre',
+      value: appointment.captchaToken ? 'Jeton present' : 'Non enregistré',
     },
   ]
 }
@@ -225,7 +234,7 @@ function DetailCell({ label, value, wide = false }: DetailItem) {
   return (
     <div
       className={cn(
-        'min-w-0 rounded-lg border border-border/60 bg-white px-3 py-2',
+        'min-w-0 border-b border-border/60 px-1 py-3',
         wide ? 'md:col-span-2' : '',
       )}
     >
@@ -249,7 +258,7 @@ function DetailSection({
   children: ReactNode
 }) {
   return (
-    <section className="space-y-3 rounded-xl border border-border/70 bg-slate-50/70 p-3">
+    <section className="detail-section">
       <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
         {icon}
         {title}
@@ -282,6 +291,7 @@ export function RequestRecordDetailsDialog({
   visaTypes = [],
   onOpenChange,
 }: RequestRecordDetailsDialogProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -289,16 +299,36 @@ export function RequestRecordDetailsDialog({
       return
     }
 
+    const previousFocus = document.activeElement as HTMLElement | null
     closeButtonRef.current?.focus()
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Tab') {
+        const items = Array.from(
+          panelRef.current?.querySelectorAll<HTMLElement>(
+            'button:not([disabled]),a[href],input,select,[tabindex="0"]',
+          ) ?? [],
+        )
+        const first = items[0],
+          last = items[items.length - 1]
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault()
+          last?.focus()
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault()
+          first?.focus()
+        }
+      }
       if (event.key === 'Escape') {
         onOpenChange(false)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      previousFocus?.focus()
+    }
   }, [onOpenChange, open])
 
   if (!open || !record) {
@@ -329,7 +359,7 @@ export function RequestRecordDetailsDialog({
     { label: 'Email utilisateur', value: record.submitterEmail },
     { label: 'Voyageur principal', value: getRequestPrimaryLabel(record) },
     { label: 'Email principal', value: record.primaryTravellerEmail },
-    { label: 'Telephone principal', value: record.primaryTravellerPhone },
+    { label: 'Téléphone principal', value: record.primaryTravellerPhone },
   ]
 
   const deliveryContactName = formatContactName(
@@ -346,8 +376,14 @@ export function RequestRecordDetailsDialog({
             value: values.optionalServices.deliveryContact.address,
             wide: true,
           },
-          { label: 'Code postal', value: values.optionalServices.deliveryContact.zip },
-          { label: 'Ville', value: values.optionalServices.deliveryContact.city },
+          {
+            label: 'Code postal',
+            value: values.optionalServices.deliveryContact.zip,
+          },
+          {
+            label: 'Ville',
+            value: values.optionalServices.deliveryContact.city,
+          },
         ]
       : []
   const invoiceRows: DetailItem[] = values.optionalServices.invoiceEmail
@@ -371,25 +407,28 @@ export function RequestRecordDetailsDialog({
       }}
     >
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="request-record-details-title"
-        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+        className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-md bg-white shadow-sm"
       >
         <div className="flex flex-col gap-3 border-b border-border/70 px-4 py-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0 space-y-2">
             <div className="flex flex-wrap items-center gap-2">
-              <Badge>Details</Badge>
-              <Badge variant="secondary">{formatFormulaLabel(record.formula)}</Badge>
+              <Badge>Détails</Badge>
+              <Badge variant="secondary">
+                {formatFormulaLabel(record.formula)}
+              </Badge>
               <Badge variant="outline">{record.centerLabel}</Badge>
             </div>
             <div>
-              <h3
+              <h2
                 id="request-record-details-title"
                 className="text-lg font-semibold text-foreground"
               >
                 {getRequestPrimaryLabel(record)}
-              </h3>
+              </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Soumis le {formatRequestSubmittedAt(record)} par{' '}
                 {getRequestSubmitterLabel(record)}
@@ -401,14 +440,19 @@ export function RequestRecordDetailsDialog({
             type="button"
             variant="ghost"
             size="icon"
-            aria-label="Fermer les details"
+            aria-label="Fermer les détails"
             onClick={() => onOpenChange(false)}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <div className="space-y-3 overflow-y-auto px-4 py-4">
+        <div
+          role="region"
+          tabIndex={0}
+          aria-label="Contenu du dossier"
+          className="space-y-3 overflow-y-auto px-4 py-4"
+        >
           <DetailSection
             icon={<ClipboardList className="h-4 w-4 text-primary" />}
             title="Dossier"
@@ -501,7 +545,10 @@ export function RequestRecordDetailsDialog({
                     value:
                       visaFileVariation?.label ?? traveller.visaFileVariation,
                   },
-                  { label: 'Renouvellement', value: formatBoolean(traveller.renewal) },
+                  {
+                    label: 'Renouvellement',
+                    value: formatBoolean(traveller.renewal),
+                  },
                   {
                     label: 'SMS voyageur',
                     value: formatBoolean(traveller.followSms),
@@ -524,7 +571,10 @@ export function RequestRecordDetailsDialog({
                         Voyageur {index + 1}
                       </p>
                       {index === 0 ? (
-                        <Badge variant="secondary" className="px-2 py-0 text-[11px]">
+                        <Badge
+                          variant="secondary"
+                          className="px-2 py-0 text-[11px]"
+                        >
                           Principal
                         </Badge>
                       ) : null}

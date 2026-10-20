@@ -1,6 +1,6 @@
 import { FolderClock } from 'lucide-react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { RequestRecordList } from '@/features/dashboard/components/request-record-list'
 import type {
   CurrentUserProfile,
@@ -45,21 +45,14 @@ export function HistoryPage({
 
   if (records.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Aucune demande enregistree</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2 text-foreground">
-            <FolderClock className="h-4 w-4" />
-            Les soumissions reussies apparaitront ici automatiquement.
-          </div>
-          <p>
-            Chaque entree conserve le dossier complet pour le retrouver ou le
-            reutiliser plus tard.
-          </p>
-        </CardContent>
-      </Card>
+      <div className="empty-state">
+        <FolderClock size={28} aria-hidden="true" />
+        <h2>Aucune demande enregistrée</h2>
+        <p>
+          Les demandes transmises avec succès apparaîtront ici. Vous pourrez
+          consulter leur détail ou reprendre un dossier.
+        </p>
+      </div>
     )
   }
 

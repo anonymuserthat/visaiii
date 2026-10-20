@@ -16,10 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
-import type {
-  AvailabilityResponse,
-  BookingFormValues,
-} from '@/lib/api/types'
+import type { AvailabilityResponse, BookingFormValues } from '@/lib/api/types'
 import { CalendarGrid } from '@/features/booking/components/calendar-grid'
 import { FormField } from '@/features/booking/components/form-field'
 import { createConditionKey, formatAppointmentDateLabel } from '@/lib/utils'
@@ -75,8 +72,8 @@ export function Step4Appointment({
   const verificationButtonLabel = verificationOpening
     ? 'Ouverture...'
     : captchaReady
-      ? 'Repasser la verification'
-      : "Ouvrir la verification dans l'app"
+      ? 'Repasser la vérification'
+      : "Ouvrir la vérification dans l'app"
   const showChooseAppointmentBranch = Boolean(
     availability && values.appointment.chooseAppointmentDate,
   )
@@ -85,9 +82,9 @@ export function Step4Appointment({
   )
   const showTimePanel = Boolean(
     values.appointment.dateSubmit ||
-      slotsLoading ||
-      slotsError ||
-      values.appointment.availableSlots.length > 0,
+    slotsLoading ||
+    slotsError ||
+    values.appointment.availableSlots.length > 0,
   )
   const slotStatusMessage = (() => {
     if (!values.appointment.dateSubmit) {
@@ -98,7 +95,7 @@ export function Step4Appointment({
       return slotsError
     }
 
-    return "Aucun creneau horaire disponible a cette date."
+    return 'Aucun créneau horaire disponible a cette date.'
   })()
   const selectedSlot =
     values.appointment.availableSlots.find(
@@ -117,200 +114,233 @@ export function Step4Appointment({
   } disponible${values.appointment.availableSlots.length > 1 ? 's' : ''}`
 
   return (
-    <div className="space-y-4">
+    <div className="appointment-workspace">
       <Card>
         <CardHeader>
-          <CardTitle>Disponibilites et soumission</CardTitle>
+          <CardTitle>Rendez-vous et vérification</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Choisissez le rendez-vous et configurez la verification reCAPTCHA.
+            Vérifiez le mode de rendez-vous, puis terminez la vérification avant
+            l’envoi.
           </p>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {availabilityLoading ? (
-            <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-4 py-3 text-sm text-foreground">
-              <LoaderCircle className="h-4 w-4 animate-spin" />
-              Chargement des disponibilites en fonction du centre, de la formule
-              et du dossier visa...
-            </div>
-          ) : null}
-
-          {!availabilityRequested ? (
-            <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
-              Completez le type de visa, la variation et la categorie du
-              demandeur pour charger les vraies disponibilites Capago.
-            </div>
-          ) : availabilityLoading ? (
-            <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
-              Attendez le retour officiel de Capago avant de choisir une date.
-            </div>
-          ) : availabilityError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
-              {availabilityError}
-            </div>
-          ) : showChooseAppointmentBranch ? (
-            <div
-              className={`grid gap-3 ${
-                showTimePanel
-                  ? 'lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]'
-                  : ''
-              }`}
-            >
-              <div className="space-y-2">
-                <FormField
-                  label="Date de rendez-vous"
-                  error={appointmentError(errors, 'date')}
-                >
-                  <Controller
-                    control={control}
-                    name="appointment.date"
-                    render={({ field }) => (
-                      <CalendarGrid
-                        availableDays={availability?.availableDayList ?? []}
-                        unavailableDays={availability?.unavailableDayList ?? []}
-                        selectedDay={values.appointment.dateSubmit}
-                        firstAvailableDay={availability?.firstAvailableDay}
-                        minDay={availability?.firstDay}
-                        maxDay={availability?.lastDay}
-                        onSelect={(day) => {
-                          field.onChange(formatAppointmentDateLabel(day))
-                          setValue('appointment.dateSubmit', day)
-                          setValue('appointment.time', '')
-                          setValue('appointment.availableSlots', [])
-                        }}
-                      />
-                    )}
-                  />
-                </FormField>
+        <CardContent className="appointment-content">
+          <ol className="submission-checklist" aria-label="État de préparation">
+            <li>
+              <span>{availability ? '✓' : '1'}</span>
+              <div>
+                <strong>Mode de rendez-vous</strong>
+                <p>
+                  {!availability
+                    ? 'En attente des disponibilités'
+                    : values.appointment.chooseAppointmentDate
+                      ? 'Choix d’une date et d’un créneau requis'
+                      : 'File d’attente · aucun calendrier requis'}
+                </p>
               </div>
-              {showTimePanel ? (
-                <div className="space-y-3 rounded-3xl border border-border/60 bg-slate-50/90 px-4 py-4 shadow-sm">
-                  <div className="flex items-center gap-2">
-                    <Clock3 className="h-4 w-4 text-primary" />
-                    <div>
-                      <p className="font-semibold text-foreground">Creneaux</p>
-                      <p className="text-xs text-muted-foreground">
-                        Selection par liste compacte, plus proche d&apos;un combobox.
-                      </p>
-                    </div>
-                  </div>
-                  {slotsLoading ? (
-                    <div className="flex items-center gap-2 rounded-xl bg-white px-3.5 py-3 text-sm text-muted-foreground">
-                      <LoaderCircle className="h-4 w-4 animate-spin" />
-                      Chargement des horaires...
-                    </div>
-                  ) : values.appointment.availableSlots.length > 0 ? (
+            </li>
+            <li>
+              <span>{captchaReady ? '✓' : '2'}</span>
+              <div>
+                <strong>Vérification reCAPTCHA</strong>
+                <p>
+                  {captchaReady
+                    ? 'Jeton reçu pour cet envoi'
+                    : 'Vérification à terminer'}
+                </p>
+              </div>
+            </li>
+          </ol>
+          <div className="appointment-choices">
+            <h3 className="form-section-title">Disponibilités du centre</h3>
+            {availabilityLoading ? (
+              <div className="flex items-center gap-3 rounded-md bg-slate-50 px-4 py-3 text-sm text-foreground">
+                <LoaderCircle className="h-4 w-4 animate-spin" />
+                Chargement des disponibilités en fonction du centre, de la
+                formule et du dossier visa...
+              </div>
+            ) : null}
+
+            {!availabilityRequested ? (
+              <div className="rounded-md bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+                Complétez le type de visa, la variation et la categorie du
+                demandeur pour charger les vraies disponibilités Capago.
+              </div>
+            ) : availabilityLoading ? (
+              <div className="rounded-md bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+                Attendez le retour officiel de Capago avant de choisir une date.
+              </div>
+            ) : availabilityError ? (
+              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+                {availabilityError}
+              </div>
+            ) : showChooseAppointmentBranch ? (
+              <div
+                className={`grid gap-3 ${
+                  showTimePanel
+                    ? 'lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]'
+                    : ''
+                }`}
+              >
+                <div className="space-y-2">
+                  <FormField
+                    label="Date de rendez-vous"
+                    error={appointmentError(errors, 'date')}
+                  >
                     <Controller
                       control={control}
-                      name="appointment.time"
+                      name="appointment.date"
                       render={({ field }) => (
-                        <div className="space-y-3">
-                          <div className="rounded-2xl border border-border/60 bg-white px-4 py-3">
-                            <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
-                              Creneaux disponibles
-                            </p>
-                            <div className="mt-2 flex items-center justify-between gap-3">
-                              <div>
-                                <p className="text-base font-semibold text-foreground">
-                                  {selectedSlot?.label ?? 'Choisir une heure'}
-                                </p>
-                                <p className="text-sm text-muted-foreground">
-                                  {slotCountLabel}
-                                </p>
-                              </div>
-                              <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                                {formatAppointmentDateLabel(
-                                  values.appointment.dateSubmit,
-                                )}
+                        <CalendarGrid
+                          availableDays={availability?.availableDayList ?? []}
+                          unavailableDays={
+                            availability?.unavailableDayList ?? []
+                          }
+                          selectedDay={values.appointment.dateSubmit}
+                          firstAvailableDay={availability?.firstAvailableDay}
+                          minDay={availability?.firstDay}
+                          maxDay={availability?.lastDay}
+                          onSelect={(day) => {
+                            field.onChange(formatAppointmentDateLabel(day))
+                            setValue('appointment.dateSubmit', day)
+                            setValue('appointment.time', '')
+                            setValue('appointment.availableSlots', [])
+                          }}
+                        />
+                      )}
+                    />
+                  </FormField>
+                </div>
+                {showTimePanel ? (
+                  <div className="space-y-3 rounded-md border border-border/60 bg-slate-50/90 px-4 py-4 shadow-sm">
+                    <div className="flex items-center gap-2">
+                      <Clock3 className="h-4 w-4 text-primary" />
+                      <div>
+                        <p className="font-semibold text-foreground">
+                          Créneaux
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Horaires renvoyés par le centre pour cette date.
+                        </p>
+                      </div>
+                    </div>
+                    {slotsLoading ? (
+                      <div className="flex items-center gap-2 rounded-md bg-white px-3.5 py-3 text-sm text-muted-foreground">
+                        <LoaderCircle className="h-4 w-4 animate-spin" />
+                        Chargement des horaires...
+                      </div>
+                    ) : values.appointment.availableSlots.length > 0 ? (
+                      <Controller
+                        control={control}
+                        name="appointment.time"
+                        render={({ field }) => (
+                          <div className="space-y-3">
+                            <div className="rounded-md border border-border/60 bg-white px-4 py-3">
+                              <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
+                                Créneaux disponibles
+                              </p>
+                              <div className="mt-2 flex items-center justify-between gap-3">
+                                <div>
+                                  <p className="text-base font-semibold text-foreground">
+                                    {selectedSlot?.label ?? 'Choisir une heure'}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">
+                                    {slotCountLabel}
+                                  </p>
+                                </div>
+                                <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                                  {formatAppointmentDateLabel(
+                                    values.appointment.dateSubmit,
+                                  )}
+                                </div>
                               </div>
                             </div>
+                            <Select
+                              aria-label="Heure de rendez-vous"
+                              className="border-border bg-white"
+                              value={selectedSlot?.label ?? field.value}
+                              placeholder="Choisir un créneau"
+                              options={slotOptions}
+                              onChange={field.onChange}
+                            />
+                            {appointmentError(errors, 'time') ? (
+                              <p className="text-sm text-red-600">
+                                {appointmentError(errors, 'time')}
+                              </p>
+                            ) : null}
                           </div>
-                          <Select
-                            aria-label="Heure de rendez-vous"
-                            className="h-12 rounded-2xl border-border bg-white text-base font-medium"
-                            value={selectedSlot?.label ?? field.value}
-                            placeholder="Choisir un creneau"
-                            options={slotOptions}
-                            onChange={field.onChange}
-                          />
-                          {appointmentError(errors, 'time') ? (
-                            <p className="text-sm text-red-600">
-                              {appointmentError(errors, 'time')}
-                            </p>
-                          ) : null}
-                        </div>
-                      )}
-                    />
-                  ) : (
-                    <p
-                      className={`rounded-xl bg-white px-3.5 py-3 text-sm ${
-                        slotsError ? 'text-red-600' : 'text-muted-foreground'
-                      }`}
-                    >
-                      {slotStatusMessage}
-                    </p>
-                  )}
+                        )}
+                      />
+                    ) : (
+                      <p
+                        className={`rounded-md bg-white px-3.5 py-3 text-sm ${
+                          slotsError ? 'text-red-600' : 'text-muted-foreground'
+                        }`}
+                      >
+                        {slotStatusMessage}
+                      </p>
+                    )}
+                  </div>
+                ) : null}
+              </div>
+            ) : showQueueBranch ? (
+              <div className="rounded-md bg-slate-50 p-4">
+                <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
+                  <ShieldAlert className="h-4 w-4" />
+                  Inscription en file d’attente
                 </div>
-              ) : null}
-            </div>
-          ) : showQueueBranch ? (
-            <div className="rounded-2xl bg-slate-50 p-4">
-              <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
-                <ShieldAlert className="h-4 w-4" />
-                Branche file d&apos;attente detectee
-              </div>
-              <p className="mb-4 text-sm text-muted-foreground">
-                Aucun calendrier n&apos;est requis. Toutes les conditions
-                ci-dessous doivent etre acceptees avant la soumission.
-              </p>
-              <div className="space-y-3">
-                {(availability?.queueConditionList ?? []).map((condition) => {
-                  const key = createConditionKey(condition)
-
-                  return (
-                    <Controller
-                      key={key}
-                      control={control}
-                      name={`appointment.queueConditions.${key}`}
-                      render={({ field }) => (
-                        <label
-                          className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm text-foreground transition-colors ${
-                            queueConditionErrors?.[key]?.message
-                              ? 'border border-red-200 bg-red-50/65'
-                              : 'bg-white'
-                          }`}
-                        >
-                          <Checkbox
-                            checked={Boolean(field.value)}
-                            onCheckedChange={(checked) =>
-                              field.onChange(Boolean(checked))
-                            }
-                          />
-                          <span>{condition}</span>
-                        </label>
-                      )}
-                    />
-                  )
-                })}
-              </div>
-              {queueConditionBlocked ? (
-                <p className="mt-3 text-sm text-red-600">
-                  Acceptez toutes les conditions de file avant de soumettre la
-                  demande.
+                <p className="mb-4 text-sm text-muted-foreground">
+                  Aucun calendrier n&apos;est requis. Toutes les conditions
+                  ci-dessous doivent être acceptees avant la soumission.
                 </p>
-              ) : null}
-            </div>
-          ) : (
-            <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
-              Attendez le retour officiel de Capago pour afficher la branche
-              calendrier ou la branche file d&apos;attente.
-            </div>
-          )}
+                <div className="space-y-3">
+                  {(availability?.queueConditionList ?? []).map((condition) => {
+                    const key = createConditionKey(condition)
 
+                    return (
+                      <Controller
+                        key={key}
+                        control={control}
+                        name={`appointment.queueConditions.${key}`}
+                        render={({ field }) => (
+                          <label
+                            className={`flex items-start gap-3 rounded-md px-4 py-3 text-sm text-foreground transition-colors ${
+                              queueConditionErrors?.[key]?.message
+                                ? 'border border-red-200 bg-red-50/65'
+                                : 'bg-white'
+                            }`}
+                          >
+                            <Checkbox
+                              checked={Boolean(field.value)}
+                              onCheckedChange={(checked) =>
+                                field.onChange(Boolean(checked))
+                              }
+                            />
+                            <span>{condition}</span>
+                          </label>
+                        )}
+                      />
+                    )
+                  })}
+                </div>
+                {queueConditionBlocked ? (
+                  <p className="mt-3 text-sm text-red-600">
+                    Acceptez toutes les conditions de file avant de soumettre la
+                    demande.
+                  </p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="rounded-md bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+                Attendez le retour officiel de Capago pour afficher la branche
+                calendrier ou la branche file d&apos;attente.
+              </div>
+            )}
+          </div>
           {automaticCaptcha ? (
             <p
               role="status"
               aria-live="polite"
-              className={`rounded-xl p-3 text-sm ${
+              className={`rounded-md p-3 text-sm ${
                 solvingCaptcha
                   ? 'bg-blue-50 text-blue-800'
                   : captchaReady
@@ -327,22 +357,22 @@ export function Step4Appointment({
                   2Captcha resout automatiquement le CAPTCHA...
                 </span>
               ) : captchaReady ? (
-                'CAPTCHA resolu automatiquement par 2Captcha. Pret a envoyer.'
+                'CAPTCHA resolu automatiquement par 2Captcha. Prêt a envoyer.'
               ) : (
-                'Resolution automatique 2Captcha en attente.'
+                'Résolution automatique 2Captcha en attente.'
               )}
             </p>
           ) : null}
-          <div className="rounded-2xl bg-slate-50 p-4">
-            <div className="mb-3 flex items-center justify-between gap-3">
+          <section className="verification-section">
+            <div className="verification-heading">
               <div>
                 <p className="font-semibold text-foreground">
-                  Verification reCAPTCHA dans l&apos;app
+                  Vérification reCAPTCHA
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {captchaReady
-                    ? 'La verification est terminee et le jeton est pret pour la soumission.'
-                    : 'Ouvrez la fenetre integree pour finaliser le test. Si le serveur refuse le jeton ou expire, vous pourrez relancer la verification.'}
+                    ? 'La vérification est terminée et le jeton est prêt pour la soumission.'
+                    : 'Ouvrez la fenetre intégrée pour finaliser le test. Si le serveur refuse le jeton ou expire, vous pourrez relancer la vérification.'}
                 </p>
               </div>
               {!captchaReady ? (
@@ -362,10 +392,8 @@ export function Step4Appointment({
               ) : null}
             </div>
             <div
-              className={`rounded-xl px-4 py-4 ${
-                captchaReady
-                  ? 'bg-emerald-50/75'
-                  : 'bg-amber-50/70'
+              className={`rounded-md px-4 py-4 ${
+                captchaReady ? 'bg-emerald-50/75' : 'bg-amber-50/70'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -377,13 +405,15 @@ export function Step4Appointment({
                 <div className="space-y-1">
                   <p className="font-semibold text-foreground">
                     {captchaReady
-                      ? 'Verification completee'
-                      : 'Verification requise'}
+                      ? 'Vérification complétée'
+                      : 'Vérification requise'}
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {captchaReady
-                      ? "Le jeton reCAPTCHA a ete capture par l'app. Si un probleme survient, cliquez simplement sur 'Repasser la verification'."
-                      : automaticCaptcha ? 'La verification sera effectuee par 2Captcha avant l’envoi.' : "Validez le reCAPTCHA ici ou activez 2Captcha pour la verification automatique."}
+                      ? "Le jeton reCAPTCHA a ete capture par l'app. Si un probleme survient, cliquez simplement sur 'Repasser la vérification'."
+                      : automaticCaptcha
+                        ? 'La vérification sera effectuee par 2Captcha avant l’envoi.'
+                        : 'Terminez la vérification dans la fenêtre officielle avant de soumettre la demande.'}
                   </p>
                   {captchaError ? (
                     <p className="text-sm text-red-600">{captchaError}</p>
@@ -396,7 +426,7 @@ export function Step4Appointment({
               name="appointment.captchaToken"
               render={({ field }) => <input type="hidden" {...field} />}
             />
-          </div>
+          </section>
         </CardContent>
       </Card>
     </div>
