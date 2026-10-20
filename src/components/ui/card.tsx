@@ -20,7 +20,7 @@ const CardHeader = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('section-heading flex flex-col gap-1 p-4', className)}
+    className={cn('section-heading flex flex-col gap-1 px-0 pb-2', className)}
     {...props}
   />
 ))
@@ -59,7 +59,7 @@ const CardContent = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn('section-content px-4 pb-4', className)}
+    className={cn('section-content px-0 pb-4', className)}
     {...props}
   />
 ))

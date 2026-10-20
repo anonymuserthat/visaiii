@@ -1,6 +1,10 @@
-# Damander Visa Desktop
+# ProVisa Desktop
 
 Windows desktop booking assistant for the Capago Algeria flow, built with Tauri, React, TypeScript, Vite, Tailwind CSS, shadcn-style UI primitives, Zustand, TanStack Query, React Hook Form, and Zod.
+
+## ProVisa branding and compatibility
+
+The application is named **ProVisa**. The desktop product/window title, browser title, icon, package metadata, and new draft export filenames use this name. Existing `damander-visa-*` storage keys, the `eu.damander.visa` bundle identifier, and internal Rust binary/library names are intentionally retained so upgrades continue to find existing profiles, drafts, encrypted credentials, and request history. Do not rename those identifiers without an explicit data migration.
 
 ## What it does
 

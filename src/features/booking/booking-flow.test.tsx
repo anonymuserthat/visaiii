@@ -707,4 +707,29 @@ describe('BookingShell flow', () => {
     expect(useBookingStore.getState().currentStep).toBe(2)
     expect(bookingClient.submitBooking).not.toHaveBeenCalled()
   })
+  it('preserves edits when leaving the wizard before the autosave delay', async () => {
+    seedStore(2)
+    const user = userEvent.setup()
+    const view = renderBookingShell()
+    await user.clear(screen.getByRole('textbox', { name: 'Nom' }))
+    await user.type(
+      screen.getByRole('textbox', { name: 'Nom' }),
+      'Nouveau nom',
+    )
+    view.unmount()
+    expect(useBookingStore.getState().draft.travellers[0].lastname).toBe(
+      'Nouveau nom',
+    )
+    await waitFor(() =>
+      expect(bookingClient.saveDraft).toHaveBeenCalledWith(
+        expect.objectContaining({
+          values: expect.objectContaining({
+            travellers: expect.arrayContaining([
+              expect.objectContaining({ lastname: 'Nouveau nom' }),
+            ]),
+          }),
+        }),
+      ),
+    )
+  })
 })

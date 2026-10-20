@@ -24,20 +24,20 @@ export function Select({
     <div className="relative">
       <select
         className={cn(
-          'flex h-9 w-full appearance-none rounded-md border border-border/70 bg-white px-3 py-2 pr-9 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
+          'flex h-10 w-full appearance-none rounded-lg border border-border/70 bg-white px-3 py-2 pr-9 text-sm text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50',
           className,
         )}
         value={value}
         {...props}
       >
-        <option value="">{placeholder ?? 'Selectionner'}</option>
+        <option value="">{placeholder ?? 'Sélectionner'}</option>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
         ))}
       </select>
-      <ChevronDown className="pointer-events-none absolute right-3 top-2.5 h-4 w-4 text-muted-foreground" />
+      <ChevronDown className="pointer-events-none absolute right-3 top-3 h-4 w-4 text-muted-foreground" />
     </div>
   )
 }

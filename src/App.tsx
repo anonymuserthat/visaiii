@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { getCurrentWindow } from '@tauri-apps/api/window'
 import {
   ChartColumnBig,
+  House,
+  ArrowRight,
   ClipboardList,
   ClockArrowUp,
   LifeBuoy,
@@ -16,6 +18,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { BookingShell } from '@/features/booking/booking-shell'
+import { HomePage } from '@/features/dashboard/pages/home-page'
 import { ContactPage } from '@/features/dashboard/pages/contact-page'
 import { ExpiredPage } from '@/features/dashboard/pages/expired-page'
 import { GmailPage } from '@/features/dashboard/pages/gmail-page'
@@ -38,7 +41,13 @@ import { useBookingStore } from '@/lib/state/store'
 import { isTauriEnvironment } from '@/lib/utils'
 
 type AppPage =
-  'new-request' | 'history' | 'expired' | 'statistics' | 'contact' | 'gmail'
+  | 'home'
+  | 'new-request'
+  | 'history'
+  | 'expired'
+  | 'statistics'
+  | 'contact'
+  | 'gmail'
 
 const EMPTY_CURRENT_USER: CurrentUserProfile = {
   name: '',
@@ -67,7 +76,7 @@ function App() {
   const requestStatistics = getRequestStatistics(requestRecords)
   const pendingReminders = getPendingExpiryReminders(requestRecords)
   const reminderSignatureRef = useRef('')
-  const [activePage, setActivePage] = useState<AppPage>('new-request')
+  const [activePage, setActivePage] = useState<AppPage>('home')
   const [currentUser, setCurrentUser] = useState<CurrentUserProfile | null>(
     null,
   )
@@ -251,6 +260,7 @@ function App() {
   }
 
   const navigationItems = [
+    { id: 'home', label: 'Accueil', hint: 'Espace personnel', icon: House },
     {
       id: 'new-request',
       label: 'Nouvelle demande',
@@ -285,6 +295,11 @@ function App() {
   ] as const
 
   const pageCopy: Record<AppPage, { title: string; description: string }> = {
+    home: {
+      title: 'Bienvenue sur ProVisa',
+      description:
+        'Un espace simple pour préparer vos demandes et suivre chaque dossier.',
+    },
     'new-request': {
       title: 'Nouvelle demande',
       description:
@@ -326,14 +341,14 @@ function App() {
           <aside className="app-navigation" aria-label="Navigation principale">
             <div className="app-brand">
               <span className="brand-symbol" aria-hidden="true">
-                D<span>V</span>
+                P
               </span>
               <div>
-                <strong>Damander Visa</strong>
-                <small>Espace de travail</small>
+                <strong>ProVisa</strong>
+                <small>Votre espace visa</small>
               </div>
             </div>
-            <div className="nav-section-label">DOSSIERS</div>
+            <div className="nav-section-label">Votre espace</div>
             <nav aria-label="Dossiers">
               <div className="nav-items">
                 {navigationItems.map((item) => {
@@ -366,133 +381,184 @@ function App() {
                 })}
               </div>
             </nav>
-            <div className="navigation-footer">
-              <span className="mode-dot" />
-              {RUNTIME_CONFIG.mockMode
-                ? 'Démonstration locale'
-                : 'Connexion Capago'}
-              <small>Version 0.2.0</small>
+            <div className="sidebar-bottom">
+              {' '}
+              <details
+                className="profile-settings"
+                onKeyDown={(event) => {
+                  if (event.key === 'Escape') {
+                    event.currentTarget.open = false
+                    event.currentTarget.querySelector('summary')?.focus()
+                  }
+                }}
+                open={
+                  activePage === 'new-request' &&
+                  (!currentUser || isEditingCurrentUser)
+                }
+              >
+                <summary>
+                  <UserRound className="h-4 w-4" />
+                  {currentUser ? currentUser.name : 'Votre profil'}
+                  <span>Compte</span>
+                </summary>
+                <Card>
+                  <CardContent className="space-y-3 py-3">
+                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <UserRound className="h-4 w-4 text-primary" />
+                      Utilisateur actif
+                    </div>
+
+                    {!currentUserLoaded ? (
+                      <p className="text-sm text-muted-foreground">
+                        Chargement de l&apos;utilisateur...
+                      </p>
+                    ) : currentUser && !isEditingCurrentUser ? (
+                      <>
+                        <div className="rounded-lg bg-slate-50 px-3 py-3 text-sm">
+                          <p className="font-medium text-foreground">
+                            {currentUser.name}
+                          </p>
+                          <p className="mt-1 inline-flex items-center gap-2 text-muted-foreground">
+                            <Mail className="h-4 w-4" />
+                            {currentUser.email}
+                          </p>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => {
+                            setCurrentUserDraft(currentUser)
+                            setIsEditingCurrentUser(true)
+                          }}
+                        >
+                          Changer l&apos;utilisateur
+                        </Button>
+                      </>
+                    ) : (
+                      <div className="space-y-3">
+                        <p className="text-sm text-muted-foreground">
+                          {currentUser
+                            ? "Mettez a jour le nom ou l'email de l'utilisateur actif."
+                            : "Renseignez une premiere fois le nom et l'email de l'utilisateur qui travaille sur cette installation."}
+                        </p>
+                        <Input
+                          aria-label="Nom de l'utilisateur actif"
+                          placeholder="Nom complet"
+                          value={currentUserDraft.name}
+                          onChange={(event) =>
+                            setCurrentUserDraft((state) => ({
+                              ...state,
+                              name: event.target.value,
+                            }))
+                          }
+                        />
+                        <Input
+                          aria-label="Email de l'utilisateur actif"
+                          type="email"
+                          placeholder="email@exemple.com"
+                          value={currentUserDraft.email}
+                          onChange={(event) =>
+                            setCurrentUserDraft((state) => ({
+                              ...state,
+                              email: event.target.value,
+                            }))
+                          }
+                        />
+                        <div className="flex flex-wrap gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            onClick={() => void handleSaveCurrentUser()}
+                          >
+                            Enregistrer
+                          </Button>
+                          {currentUser ? (
+                            <Button
+                              type="button"
+                              variant="secondary"
+                              size="sm"
+                              onClick={() => {
+                                setCurrentUserDraft(currentUser)
+                                setIsEditingCurrentUser(false)
+                              }}
+                            >
+                              Annuler
+                            </Button>
+                          ) : null}
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </details>
+              <div className="navigation-footer">
+                <span className="mode-dot" />
+                {RUNTIME_CONFIG.mockMode
+                  ? 'Démonstration locale'
+                  : 'Connexion Capago'}
+                <small>ProVisa · 0.2.0</small>
+              </div>
             </div>
           </aside>
 
           <section id="workspace" className="workspace" tabIndex={-1}>
+            <div className="workspace-utility">
+              <span>
+                Votre espace personnel <span aria-hidden="true">/</span>{' '}
+                {activePage === 'home' ? 'Accueil' : pageCopy[activePage].title}
+              </span>
+              <button
+                type="button"
+                onClick={() => {
+                  const profile =
+                    document.querySelector<HTMLDetailsElement>(
+                      '.profile-settings',
+                    )
+                  if (profile) {
+                    profile.open = !profile.open
+                    profile.querySelector('summary')?.focus()
+                  }
+                }}
+              >
+                <UserRound size={16} aria-hidden="true" />
+                {currentUser?.name ?? 'Mon compte'}
+              </button>
+            </div>
             <header className="workspace-header">
               <div>
-                <p className="eyebrow">
-                  DAMANDER /{' '}
-                  {activePage === 'new-request' ? 'PRÉPARATION' : 'GESTION'}
-                </p>
                 <h1>{pageCopy[activePage].title}</h1>
                 <p>{pageCopy[activePage].description}</p>
               </div>
-              <span className="workspace-context">
-                {requestStatistics.totalCount} dossier
-                {requestStatistics.totalCount > 1 ? 's' : ''} enregistré
-                {requestStatistics.totalCount > 1 ? 's' : ''}
-              </span>
+              {activePage === 'home' ? (
+                <Button
+                  type="button"
+                  onClick={() => setActivePage('new-request')}
+                >
+                  <PlusSquare size={16} className="mr-2" />
+                  Nouvelle demande
+                </Button>
+              ) : (
+                <span className="workspace-context">
+                  {requestStatistics.totalCount} dossier
+                  {requestStatistics.totalCount > 1 ? 's' : ''} enregistré
+                  {requestStatistics.totalCount > 1 ? 's' : ''}
+                </span>
+              )}
             </header>
-            <details
-              className="profile-settings"
-              open={!currentUser || isEditingCurrentUser}
-            >
-              <summary>
-                <UserRound className="h-4 w-4" />
-                {currentUser
-                  ? `${currentUser.name} · ${currentUser.email}`
-                  : 'Configurer votre profil opérateur'}
-                <span>Profil et session</span>
-              </summary>
-              <Card>
-                <CardContent className="space-y-3 py-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <UserRound className="h-4 w-4 text-primary" />
-                    Utilisateur actif
-                  </div>
-
-                  {!currentUserLoaded ? (
-                    <p className="text-sm text-muted-foreground">
-                      Chargement de l&apos;utilisateur...
-                    </p>
-                  ) : currentUser && !isEditingCurrentUser ? (
-                    <>
-                      <div className="rounded-lg bg-slate-50 px-3 py-3 text-sm">
-                        <p className="font-medium text-foreground">
-                          {currentUser.name}
-                        </p>
-                        <p className="mt-1 inline-flex items-center gap-2 text-muted-foreground">
-                          <Mail className="h-4 w-4" />
-                          {currentUser.email}
-                        </p>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => {
-                          setCurrentUserDraft(currentUser)
-                          setIsEditingCurrentUser(true)
-                        }}
-                      >
-                        Changer l&apos;utilisateur
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        {currentUser
-                          ? "Mettez a jour le nom ou l'email de l'utilisateur actif."
-                          : "Renseignez une premiere fois le nom et l'email de l'utilisateur qui travaille sur cette installation."}
-                      </p>
-                      <Input
-                        aria-label="Nom de l'utilisateur actif"
-                        placeholder="Nom complet"
-                        value={currentUserDraft.name}
-                        onChange={(event) =>
-                          setCurrentUserDraft((state) => ({
-                            ...state,
-                            name: event.target.value,
-                          }))
-                        }
-                      />
-                      <Input
-                        aria-label="Email de l'utilisateur actif"
-                        type="email"
-                        placeholder="email@exemple.com"
-                        value={currentUserDraft.email}
-                        onChange={(event) =>
-                          setCurrentUserDraft((state) => ({
-                            ...state,
-                            email: event.target.value,
-                          }))
-                        }
-                      />
-                      <div className="flex flex-wrap gap-2">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => void handleSaveCurrentUser()}
-                        >
-                          Enregistrer
-                        </Button>
-                        {currentUser ? (
-                          <Button
-                            type="button"
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => {
-                              setCurrentUserDraft(currentUser)
-                              setIsEditingCurrentUser(false)
-                            }}
-                          >
-                            Annuler
-                          </Button>
-                        ) : null}
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </details>
+            {activePage === 'home' ? (
+              <HomePage
+                records={requestRecords}
+                isLoading={requestRecordsQuery.isLoading}
+                error={requestRecordsQuery.isError}
+                onRetry={() => void requestRecordsQuery.refetch()}
+                currentUser={currentUser}
+                onCreate={() => setActivePage('new-request')}
+                onHistory={() => setActivePage('history')}
+                onExpired={() => setActivePage('expired')}
+                onReuse={handleReuseRecord}
+              />
+            ) : null}
             {activePage === 'new-request' ? (
               !currentUserLoaded ? (
                 <Card>
@@ -509,10 +575,29 @@ function App() {
                       Configurez d&apos;abord l&apos;utilisateur actif
                     </p>
                     <p>
-                      Renseignez votre nom et votre adresse e-mail ci-dessus
-                      pour attribuer correctement les nouvelles demandes et
-                      pre-remplir le contact principal.
+                      Ouvrez « Votre profil » dans la barre latérale et
+                      renseignez votre nom et votre adresse e-mail pour
+                      attribuer correctement les nouvelles demandes et
+                      préremplir le contact principal.
                     </p>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const profile =
+                          document.querySelector<HTMLDetailsElement>(
+                            '.profile-settings',
+                          )
+                        if (profile) {
+                          profile.open = true
+                          profile
+                            .querySelector<HTMLInputElement>('input')
+                            ?.focus()
+                        }
+                      }}
+                    >
+                      Configurer mon profil{' '}
+                      <ArrowRight size={16} className="ml-2" />
+                    </Button>
                   </CardContent>
                 </Card>
               )

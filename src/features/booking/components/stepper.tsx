@@ -1,4 +1,4 @@
-import { Check, ChevronRight } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 const steps = ['Configuration', 'Voyageurs', 'Services', 'Rendez-vous']
 export function Stepper({
@@ -25,11 +25,7 @@ export function Stepper({
                 onClick={() => onStepSelect?.(id)}
               >
                 <span className="step-number">
-                  {complete && id !== currentStep ? (
-                    <Check size={14} />
-                  ) : (
-                    `0${id}`
-                  )}
+                  {complete && id !== currentStep ? <Check size={14} /> : id}
                 </span>
                 <span>
                   {title}
@@ -42,7 +38,6 @@ export function Stepper({
                   </small>
                 </span>
               </button>
-              {id < 4 ? <ChevronRight size={14} aria-hidden="true" /> : null}
             </li>
           )
         })}

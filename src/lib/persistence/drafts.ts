@@ -12,14 +12,14 @@ export async function exportDraftJson(draft: StoredBookingDraft) {
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = 'damander-visa-draft.json'
+    link.download = 'provisa-draft.json'
     link.click()
     URL.revokeObjectURL(url)
     return true
   }
 
   const filePath = await save({
-    defaultPath: 'damander-visa-draft.json',
+    defaultPath: 'provisa-draft.json',
     filters: [{ name: 'JSON', extensions: ['json'] }],
   })
 

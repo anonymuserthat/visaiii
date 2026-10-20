@@ -327,6 +327,7 @@ export function BookingShell({ currentUser = null }: BookingShellProps) {
   )
   const lastPersistedDraftRef = useRef(JSON.stringify(formSeedRef.current))
   const latestSessionIdRef = useRef('')
+  const pendingDraftRef = useRef<BookingFormValues | null>(null)
   const [activeTravellerIndex, setActiveTravellerIndex] = useState(0)
   const [resetRequested, setResetRequested] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<string>('')
@@ -772,9 +773,13 @@ export function BookingShell({ currentUser = null }: BookingShellProps) {
       return
     }
 
+    // Persist the compatible Zustand snapshot immediately so page navigation
+    // cannot discard edits during the backend debounce interval.
+    hydrateDraft(liveValues)
+    pendingDraftRef.current = liveValues
     const handle = window.setTimeout(() => {
       lastPersistedDraftRef.current = serializedDraft
-      hydrateDraft(liveValues)
+      pendingDraftRef.current = null
       void bookingClient
         .saveDraft({
           version: RUNTIME_CONFIG.draftVersion,
@@ -789,6 +794,22 @@ export function BookingShell({ currentUser = null }: BookingShellProps) {
 
     return () => window.clearTimeout(handle)
   }, [hydrateDraft, liveValues, serializedDraft])
+
+  useEffect(
+    () => () => {
+      const pending = pendingDraftRef.current
+      if (!pending) return
+      pendingDraftRef.current = null
+      void bookingClient
+        .saveDraft({
+          version: RUNTIME_CONFIG.draftVersion,
+          updatedAt: new Date().toISOString(),
+          values: pending,
+        })
+        .catch((error) => console.error(error))
+    },
+    [],
+  )
 
   const isBootstrapping =
     globalParamsQuery.isLoading ||
@@ -1047,11 +1068,11 @@ export function BookingShell({ currentUser = null }: BookingShellProps) {
         <div className="draft-toolbar">
           <div>
             <p className="draft-label">
-              Brouillon local <span>· enregistré sur cet appareil</span>
+              Votre brouillon <span>· sauvegarde sur cet appareil</span>
             </p>
             <p className="text-sm text-muted-foreground">
               {lastSavedAt
-                ? `Derniere sauvegarde a ${lastSavedAt}`
+                ? `Enregistré à ${lastSavedAt}`
                 : 'Autosauvegarde active'}
             </p>
           </div>
