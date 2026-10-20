@@ -3,15 +3,36 @@ on:
   push:
     branches:
       - codex/ui-redesign-v0.3.0
+    paths-ignore:
+      - docs/windows-build.json
+      - docs/windows-build.log
   workflow_dispatch:
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: windows-installer-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   installer:
     runs-on: windows-latest
     timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+      - name: Report build started
+        shell: pwsh
+        env:
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          New-Item -ItemType Directory -Force docs | Out-Null
+          @{ status = 'in_progress'; source_commit = $env:SOURCE_SHA; run_url = $env:RUN_URL; version = '0.3.0' } | ConvertTo-Json | Set-Content docs/windows-build.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/windows-build.json
+          git commit -m 'Report Windows installer build started [skip ci]'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not record build status.' }
+          git push origin "HEAD:${{ github.ref_name }}"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not push build status.' }
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -21,10 +42,45 @@ jobs:
           targets: x86_64-pc-windows-msvc
       - name: Test and build the installed application
         shell: pwsh
-        run: ./scripts/build-windows.ps1
+        run: |
+          Start-Transcript -Path "$env:RUNNER_TEMP/windows-build.log"
+          try { ./scripts/build-windows.ps1 }
+          finally { Stop-Transcript }
       - uses: actions/upload-artifact@v4
+        id: installer-artifact
         with:
           name: Damander-Visa-0.3.0-Windows
           path: src-tauri/target/release/bundle/nsis/*.exe
           if-no-files-found: error
           retention-days: 14
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Windows-build-log
+          path: ${{ runner.temp }}/windows-build.log
+          if-no-files-found: ignore
+          retention-days: 14
+      - name: Report build result
+        if: always()
+        shell: pwsh
+        env:
+          RESULT: ${{ job.status }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_SHA: ${{ github.sha }}
+          INSTALLER_URL: ${{ steps.installer-artifact.outputs.artifact-url }}
+        run: |
+          New-Item -ItemType Directory -Force docs | Out-Null
+          @{ status = $env:RESULT; source_commit = $env:SOURCE_SHA; run_url = $env:RUN_URL; installer_url = $env:INSTALLER_URL; version = '0.3.0' } | ConvertTo-Json | Set-Content docs/windows-build.json
+          if (Test-Path "$env:RUNNER_TEMP/windows-build.log") {
+            Get-Content "$env:RUNNER_TEMP/windows-build.log" -Tail 180 | Set-Content docs/windows-build.log
+          }
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/windows-build.json
+          if (Test-Path docs/windows-build.log) { git add docs/windows-build.log }
+          git commit -m 'Report Windows installer build result [skip ci]'
+          if ($LASTEXITCODE -ne 0) { throw 'Could not record build result.' }
+          git pull --rebase origin "${{ github.ref_name }}"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not update the build report branch.' }
+          git push origin "HEAD:${{ github.ref_name }}"
+          if ($LASTEXITCODE -ne 0) { throw 'Could not push build result.' }
