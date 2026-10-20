@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   ArrowRight,
   Plus,
@@ -5,7 +6,12 @@ import {
   Clock3,
   FileText,
   ChevronRight,
+  Search,
+  LayoutGrid,
+  List,
 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { RequestRecordDetailsDialog } from '@/features/dashboard/components/request-record-details-dialog'
 import { Button } from '@/components/ui/button'
 import type { CurrentUserProfile, StoredRequestRecord } from '@/lib/api/types'
 import {
@@ -36,27 +42,30 @@ export function HomePage({
   onExpired,
   onReuse,
 }: HomePageProps) {
-  const recent = [...records]
+  const [search, setSearch] = useState('')
+  const [scope, setScope] = useState<'all' | 'expired'>('all')
+  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [detailsRecord, setDetailsRecord] =
+    useState<StoredRequestRecord | null>(null)
+  const query = search.trim().toLocaleLowerCase('fr')
+  const filtered = records.filter(
+    (record) =>
+      (scope !== 'expired' || isRequestExpired(record)) &&
+      [
+        getRequestPrimaryLabel(record),
+        record.centerLabel,
+        record.primaryTravellerEmail,
+      ]
+        .join(' ')
+        .toLocaleLowerCase('fr')
+        .includes(query),
+  )
+  const recent = [...filtered]
     .sort((a, b) => b.submittedAt.localeCompare(a.submittedAt))
     .slice(0, 6)
   const expired = records.filter((record) => isRequestExpired(record))
   return (
     <div className="home-workspace">
-      <section className="home-intro">
-        <div className="home-intro-icon">
-          <FileText size={24} strokeWidth={1.5} />
-        </div>
-        <div>
-          <h2>Votre prochain départ commence ici.</h2>
-          <p>
-            Préparez les informations des voyageurs, choisissez votre centre et
-            retrouvez vos dossiers au même endroit.
-          </p>
-          <button type="button" onClick={onCreate}>
-            Préparer une demande <ArrowRight size={15} />
-          </button>
-        </div>
-      </section>
       <section className="home-requests" aria-labelledby="my-requests-title">
         <header>
           <div>
@@ -73,6 +82,67 @@ export function HomePage({
             </button>
           ) : null}
         </header>
+        {records.length > 0 && !error ? (
+          <div className="home-library-toolbar">
+            <div
+              className="library-tabs"
+              role="group"
+              aria-label="Filtrer les demandes"
+            >
+              <button
+                type="button"
+                aria-pressed={scope === 'all'}
+                onClick={() => setScope('all')}
+              >
+                Toutes les demandes <span>{records.length}</span>
+              </button>
+              <button
+                type="button"
+                aria-pressed={scope === 'expired'}
+                onClick={() => setScope('expired')}
+              >
+                À renouveler <span>{expired.length}</span>
+              </button>
+            </div>
+            <div className="library-controls">
+              <div className="relative">
+                <Search
+                  size={15}
+                  className="absolute left-3 top-3 text-muted-foreground pointer-events-none"
+                />
+                <Input
+                  aria-label="Rechercher mes demandes"
+                  placeholder="Rechercher un dossier"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <div
+                className="library-view"
+                role="group"
+                aria-label="Présentation des demandes"
+              >
+                <button
+                  type="button"
+                  aria-label="Afficher en grille"
+                  aria-pressed={view === 'grid'}
+                  onClick={() => setView('grid')}
+                >
+                  <LayoutGrid size={16} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Afficher en liste"
+                  aria-pressed={view === 'list'}
+                  onClick={() => setView('list')}
+                >
+                  <List size={16} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
         {isLoading ? (
           <div className="home-empty" role="status">
             Chargement de vos dossiers…
@@ -86,7 +156,9 @@ export function HomePage({
             </Button>
           </div>
         ) : recent.length ? (
-          <div className="home-request-grid">
+          <div
+            className={`home-request-grid ${view === 'list' ? 'is-list' : ''}`}
+          >
             {recent.map((record) => (
               <article className="home-request" key={record.id}>
                 <div className="home-request-top">
@@ -99,7 +171,16 @@ export function HomePage({
                     {isRequestExpired(record) ? 'À renouveler' : 'Enregistrée'}
                   </span>
                 </div>
-                <h3>{getRequestPrimaryLabel(record)}</h3>
+                <h3>
+                  <button
+                    type="button"
+                    className="request-title-action"
+                    aria-label={`Consulter le dossier de ${getRequestPrimaryLabel(record)}`}
+                    onClick={() => setDetailsRecord(record)}
+                  >
+                    {getRequestPrimaryLabel(record)}
+                  </button>
+                </h3>
                 <p>
                   {record.centerLabel} · {record.travellerCount} voyageur
                   {record.travellerCount > 1 ? 's' : ''}
@@ -118,6 +199,21 @@ export function HomePage({
                 </footer>
               </article>
             ))}
+          </div>
+        ) : records.length > 0 ? (
+          <div className="home-empty" role="status">
+            <Search size={24} className="mx-auto mb-3 text-muted-foreground" />
+            <h3>Aucun dossier trouvé</h3>
+            <p>Essayez un autre nom, un autre centre ou retirez le filtre.</p>
+            <Button
+              variant="secondary"
+              onClick={() => {
+                setSearch('')
+                setScope('all')
+              }}
+            >
+              Effacer la recherche
+            </Button>
           </div>
         ) : (
           <div className="home-empty">
@@ -151,22 +247,31 @@ export function HomePage({
           <ArrowRight size={17} />
         </button>
       ) : null}
-      <div className="home-guide">
-        <h2>Votre demande, en quatre étapes</h2>
-        <ol>
-          {[
-            'Choisissez votre centre',
-            'Renseignez les voyageurs',
-            'Sélectionnez vos services',
-            'Vérifiez et transmettez',
-          ].map((label, i) => (
-            <li key={label}>
-              <span>{i + 1}</span>
-              {label}
-            </li>
-          ))}
-        </ol>
-      </div>
+      {records.length === 0 && !isLoading && !error ? (
+        <div className="home-guide">
+          <h2>Votre demande, en quatre étapes</h2>
+          <ol>
+            {[
+              'Choisissez votre centre',
+              'Renseignez les voyageurs',
+              'Sélectionnez vos services',
+              'Vérifiez et transmettez',
+            ].map((label, i) => (
+              <li key={label}>
+                <span>{i + 1}</span>
+                {label}
+              </li>
+            ))}
+          </ol>
+        </div>
+      ) : null}
+      <RequestRecordDetailsDialog
+        record={detailsRecord}
+        open={Boolean(detailsRecord)}
+        onOpenChange={(open) => {
+          if (!open) setDetailsRecord(null)
+        }}
+      />
     </div>
   )
 }

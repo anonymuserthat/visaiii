@@ -325,8 +325,8 @@ export function RequestRecordList({
                 }}
               />
             </div>
-            <details className="record-filters" open>
-              <summary>Filtres de recherche</summary>
+            <details className="record-filters">
+              <summary>Affiner la recherche</summary>
               <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                 <Select
                   aria-label="Filtrer par centre"
@@ -360,8 +360,8 @@ export function RequestRecordList({
                       : 'Tous les statuts'
                   }
                   options={[
-                    { value: 'expired', label: 'Expirees' },
-                    { value: 'recent', label: 'Recentes' },
+                    { value: 'expired', label: 'Expirées' },
+                    { value: 'recent', label: 'Récentes' },
                   ]}
                   onChange={(event) => {
                     setStatusFilter(event.target.value)
@@ -380,7 +380,7 @@ export function RequestRecordList({
                 />
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">
-                    Soumis a partir du
+                    Soumis à partir du
                   </p>
                   <Input
                     aria-label="Date de soumission a partir de"
@@ -414,7 +414,7 @@ export function RequestRecordList({
           <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
               <span>
-                {filteredRecords.length} resultat
+                {filteredRecords.length} résultat
                 {filteredRecords.length > 1 ? 's' : ''}
               </span>
               {filteredRecords.length > 0 ? (
@@ -578,7 +578,7 @@ export function RequestRecordList({
                         {formatRequestAgeLabel(record)}
                       </p>
                       <p className="text-muted-foreground">
-                        Creee par {getRequestSubmitterLabel(record)}
+                        Créée par {getRequestSubmitterLabel(record)}
                       </p>
                     </div>
 
@@ -649,7 +649,7 @@ export function RequestRecordList({
                   onClick={() => setPage(Math.max(1, currentPage - 1))}
                 >
                   <ChevronLeft className="mr-1 h-4 w-4" />
-                  Precedent
+                  Précédent
                 </Button>
                 <Button
                   type="button"

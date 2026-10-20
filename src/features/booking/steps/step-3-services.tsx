@@ -57,11 +57,13 @@ function ServiceRadioCard({
   icon,
   title,
   description,
+  included = false,
   children,
 }: {
   icon: ReactNode
   title: string
   description?: string | null
+  included?: boolean
   children: ReactNode
 }) {
   return (
@@ -70,6 +72,9 @@ function ServiceRadioCard({
         <div className="text-primary">{icon}</div>
         <div>
           <p className="font-semibold text-foreground">{title}</p>
+          {included ? (
+            <span className="service-included">Inclus dans la formule</span>
+          ) : null}
           {description ? (
             <p className="text-sm text-muted-foreground">{description}</p>
           ) : null}
@@ -142,6 +147,10 @@ export function Step3Services({
               icon={<Clock3 className="h-4 w-4" />}
               title="Créneau Prime Time"
               description={findService('prime_time')?.description}
+              included={
+                values.formula === 'premium' &&
+                Boolean(findService('prime_time')?.isIncludedInPremium)
+              }
             >
               <Controller
                 control={control}
@@ -166,6 +175,10 @@ export function Step3Services({
               icon={<ImageIcon className="h-4 w-4" />}
               title="Photos d'identite"
               description={findService('portrait')?.description}
+              included={
+                values.formula === 'premium' &&
+                Boolean(findService('portrait')?.isIncludedInPremium)
+              }
             >
               <FormField
                 label="Souhaitez-vous realiser les photos d'identite au centre ?"
@@ -203,6 +216,10 @@ export function Step3Services({
               icon={<Shield className="h-4 w-4" />}
               title="Mise en relation assurance"
               description={findService('insurance')?.description}
+              included={
+                values.formula === 'premium' &&
+                Boolean(findService('insurance')?.isIncludedInPremium)
+              }
             >
               <FormField
                 label="Souhaitez-vous être rappele par un assureur ?"
@@ -237,6 +254,10 @@ export function Step3Services({
               icon={<Home className="h-4 w-4" />}
               title="Service de collecte et de livraison des passeports"
               description={findService('delivery')?.description}
+              included={
+                values.formula === 'premium' &&
+                Boolean(findService('delivery')?.isIncludedInPremium)
+              }
             >
               <FormField
                 label="Mode de livraison du passeport"
@@ -362,6 +383,10 @@ export function Step3Services({
               icon={<MessageSquare className="h-4 w-4" />}
               title="Service de suivi de demande"
               description={findService('sms')?.description}
+              included={
+                values.formula === 'premium' &&
+                Boolean(findService('sms')?.isIncludedInPremium)
+              }
             >
               <Controller
                 control={control}
@@ -452,6 +477,10 @@ export function Step3Services({
               icon={<Receipt className="h-4 w-4" />}
               title="Facture"
               description={findService('invoice')?.description}
+              included={
+                values.formula === 'premium' &&
+                Boolean(findService('invoice')?.isIncludedInPremium)
+              }
             >
               <Controller
                 control={control}

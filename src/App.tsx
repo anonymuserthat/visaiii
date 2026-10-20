@@ -359,7 +359,14 @@ function App() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => setActivePage(item.id)}
+                      onClick={() => {
+                        setActivePage(item.id)
+                        const profile =
+                          document.querySelector<HTMLDetailsElement>(
+                            '.profile-settings',
+                          )
+                        if (profile) profile.open = false
+                      }}
                       aria-current={isActive ? 'page' : undefined}
                       className={`nav-item ${isActive ? 'is-active' : ''}`}
                     >

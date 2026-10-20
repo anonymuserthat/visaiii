@@ -286,73 +286,6 @@ export function Step2Travellers({
                 </FormField>
               </div>
 
-              <div className="traveller-field-section">
-                <div className="mb-2">
-                  <p className="font-semibold text-foreground">
-                    Date de naissance
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Jour, mois et année de naissance.
-                  </p>
-                </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <FormField
-                    label="Jour"
-                    error={messageFor(errors, index, 'dayBirth')}
-                  >
-                    <Controller
-                      control={control}
-                      name={`travellers.${index}.dayBirth`}
-                      render={({ field }) => (
-                        <Select
-                          aria-label="Jour de naissance"
-                          value={normalizeSelectValue(field.value, 2)}
-                          options={DAY_OPTIONS}
-                          placeholder="- -"
-                          onChange={field.onChange}
-                        />
-                      )}
-                    />
-                  </FormField>
-                  <FormField
-                    label="Mois"
-                    error={messageFor(errors, index, 'monthBirth')}
-                  >
-                    <Controller
-                      control={control}
-                      name={`travellers.${index}.monthBirth`}
-                      render={({ field }) => (
-                        <Select
-                          aria-label="Mois de naissance"
-                          value={normalizeSelectValue(field.value, 2)}
-                          options={MONTH_OPTIONS}
-                          placeholder="- -"
-                          onChange={field.onChange}
-                        />
-                      )}
-                    />
-                  </FormField>
-                  <FormField
-                    label="Année"
-                    error={messageFor(errors, index, 'yearBirth')}
-                  >
-                    <Controller
-                      control={control}
-                      name={`travellers.${index}.yearBirth`}
-                      render={({ field }) => (
-                        <Select
-                          aria-label="Année de naissance"
-                          value={normalizeSelectValue(field.value, 4)}
-                          options={BIRTH_YEAR_OPTIONS}
-                          placeholder="- -"
-                          onChange={field.onChange}
-                        />
-                      )}
-                    />
-                  </FormField>
-                </div>
-              </div>
-
               {index === 0 ? (
                 <div className="grid gap-4 md:grid-cols-3">
                   <FormField
@@ -417,7 +350,74 @@ export function Step2Travellers({
                 </div>
               ) : null}
 
-              <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+              <div className="traveller-document-fields">
+                <div className="traveller-field-section">
+                  <div className="mb-2">
+                    <p className="font-semibold text-foreground">
+                      Date de naissance
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Jour, mois et année de naissance.
+                    </p>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <FormField
+                      label="Jour"
+                      error={messageFor(errors, index, 'dayBirth')}
+                    >
+                      <Controller
+                        control={control}
+                        name={`travellers.${index}.dayBirth`}
+                        render={({ field }) => (
+                          <Select
+                            aria-label="Jour de naissance"
+                            value={normalizeSelectValue(field.value, 2)}
+                            options={DAY_OPTIONS}
+                            placeholder="- -"
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </FormField>
+                    <FormField
+                      label="Mois"
+                      error={messageFor(errors, index, 'monthBirth')}
+                    >
+                      <Controller
+                        control={control}
+                        name={`travellers.${index}.monthBirth`}
+                        render={({ field }) => (
+                          <Select
+                            aria-label="Mois de naissance"
+                            value={normalizeSelectValue(field.value, 2)}
+                            options={MONTH_OPTIONS}
+                            placeholder="- -"
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </FormField>
+                    <FormField
+                      label="Année"
+                      error={messageFor(errors, index, 'yearBirth')}
+                    >
+                      <Controller
+                        control={control}
+                        name={`travellers.${index}.yearBirth`}
+                        render={({ field }) => (
+                          <Select
+                            aria-label="Année de naissance"
+                            value={normalizeSelectValue(field.value, 4)}
+                            options={BIRTH_YEAR_OPTIONS}
+                            placeholder="- -"
+                            onChange={field.onChange}
+                          />
+                        )}
+                      />
+                    </FormField>
+                  </div>
+                </div>
+
                 <div className="space-y-4">
                   <FormField
                     label="Numéro du passeport"

@@ -68,4 +68,65 @@ describe('ProVisa home workspace', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Réessayer' }))
     expect(actions.onRetry).toHaveBeenCalledOnce()
   })
+  it('combines real dossier search with the expiration filter and can reset both', async () => {
+    const user = userEvent.setup()
+    const values = createEmptyBookingDraft()
+    const makeRecord = (name: string, old: boolean) => {
+      const record = buildStoredRequestRecord({
+        values,
+        payload: { fields: {}, encoded: '' },
+        result: { status: 201, location: null },
+        centerLabel: 'Annaba',
+        submitter: { name: 'Agent', email: 'agent@example.test' },
+      })
+      return {
+        ...record,
+        primaryTravellerName: name,
+        submittedAt: new Date(
+          Date.now() - (old ? 40 : 0) * 86400000,
+        ).toISOString(),
+      }
+    }
+    const records = [makeRecord('Amine', false), makeRecord('Sara', true)]
+    const before = JSON.stringify(records)
+    render(<HomePage {...props()} records={records} />)
+    await user.click(screen.getByRole('button', { name: /À renouveler/ }))
+    expect(
+      screen.queryByRole('button', { name: 'Consulter le dossier de Amine' }),
+    ).not.toBeInTheDocument()
+    await user.type(
+      screen.getByRole('textbox', { name: 'Rechercher mes demandes' }),
+      'inexistant',
+    )
+    expect(screen.getByRole('status')).toHaveTextContent('Aucun dossier trouvé')
+    await user.click(
+      screen.getByRole('button', { name: 'Effacer la recherche' }),
+    )
+    expect(
+      screen.getByRole('button', { name: 'Consulter le dossier de Amine' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Consulter le dossier de Sara' }),
+    ).toBeInTheDocument()
+    expect(JSON.stringify(records)).toBe(before)
+  })
+  it('opens read-only details without invoking the request reuse action', async () => {
+    const user = userEvent.setup()
+    const actions = props()
+    const record = buildStoredRequestRecord({
+      values: createEmptyBookingDraft(),
+      payload: { fields: {}, encoded: '' },
+      result: { status: 201, location: null },
+      centerLabel: 'Annaba',
+      submitter: { name: 'Agent', email: 'agent@example.test' },
+    })
+    render(<HomePage {...actions} records={[record]} />)
+    const open = screen.getByRole('button', { name: /Consulter le dossier/ })
+    await user.click(open)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(actions.onReuse).not.toHaveBeenCalled()
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(open).toHaveFocus()
+  })
 })

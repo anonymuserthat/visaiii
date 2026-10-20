@@ -56,7 +56,7 @@ export function ExpiredPage({
         <CardContent className="flex flex-col gap-4 py-4 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-1 text-sm text-amber-950">
             <p className="font-semibold">
-              {records.length} demande{records.length > 1 ? 's sont' : ' est'} a
+              {records.length} demande{records.length > 1 ? 's sont' : ' est'} à
               revoir
             </p>
             <p>
@@ -65,20 +65,23 @@ export function ExpiredPage({
             </p>
             {testModeEnabled ? (
               <p className="text-amber-900/90">
-                Mode test actif: les demandes recentes apparaissent aussi ici
+                Mode test actif : les demandes récentes apparaissent aussi ici
                 pour tester la re-demande sans attendre 30 jours.
               </p>
             ) : null}
           </div>
-          <label className="flex items-center gap-3 rounded-md border border-amber-200/80 bg-white/80 px-3 py-2 text-sm text-foreground">
-            <Checkbox
-              checked={testModeEnabled}
-              onCheckedChange={(checked) =>
-                setTestModeEnabled(Boolean(checked))
-              }
-            />
-            Inclure les demandes récentes (test)
-          </label>
+          <details className="expired-options">
+            <summary>Options avancées</summary>{' '}
+            <label className="flex items-center gap-3 rounded-md border border-amber-200/80 bg-white/80 px-3 py-2 text-sm text-foreground">
+              <Checkbox
+                checked={testModeEnabled}
+                onCheckedChange={(checked) =>
+                  setTestModeEnabled(Boolean(checked))
+                }
+              />
+              Inclure les demandes récentes (test)
+            </label>
+          </details>
         </CardContent>
       </Card>
 
@@ -89,12 +92,12 @@ export function ExpiredPage({
           </CardHeader>
           <CardContent className="space-y-2 text-sm text-muted-foreground">
             <p>
-              Les dossiers vieux de 30 jours ou plus apparaitront ici
+              Les dossiers vieux de 30 jours ou plus apparaîtront ici
               automatiquement.
             </p>
             <p>
               Activez le mode test ci-dessus pour voir comment fonctionne la
-              re-demande sur un dossier recent.
+              re-demande sur un dossier récent.
             </p>
           </CardContent>
         </Card>

@@ -98,6 +98,7 @@ describe('RequestRecordList', () => {
       />,
     )
 
+    await user.click(screen.getByText('Affiner la recherche'))
     await user.selectOptions(
       screen.getByLabelText(/filtrer par utilisateur/i),
       'agent-b@test.dev',

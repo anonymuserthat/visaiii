@@ -8,7 +8,7 @@ export function ContactPage() {
   return (
     <div className="support-layout">
       <section>
-        <p className="eyebrow">CONTACT DIRECT</p>
+        <p className="eyebrow">Contact direct</p>
         <h2>Contacter le développeur</h2>
         <p>Une question sur l’application ou un problème avec un dossier ?</p>
         <div className="contact-row">
@@ -45,7 +45,7 @@ export function ContactPage() {
         </p>
       </section>
       <section>
-        <p className="eyebrow">REPÈRES</p>
+        <p className="eyebrow">Repères</p>
         <h2>Avant de demander de l’aide</h2>
         <div className="support-note">
           <h3 className="font-semibold mb-2">
