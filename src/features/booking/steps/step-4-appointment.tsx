@@ -16,10 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select } from '@/components/ui/select'
-import type {
-  AvailabilityResponse,
-  BookingFormValues,
-} from '@/lib/api/types'
+import type { AvailabilityResponse, BookingFormValues } from '@/lib/api/types'
 import { CalendarGrid } from '@/features/booking/components/calendar-grid'
 import { FormField } from '@/features/booking/components/form-field'
 import { createConditionKey, formatAppointmentDateLabel } from '@/lib/utils'
@@ -85,9 +82,9 @@ export function Step4Appointment({
   )
   const showTimePanel = Boolean(
     values.appointment.dateSubmit ||
-      slotsLoading ||
-      slotsError ||
-      values.appointment.availableSlots.length > 0,
+    slotsLoading ||
+    slotsError ||
+    values.appointment.availableSlots.length > 0,
   )
   const slotStatusMessage = (() => {
     if (!values.appointment.dateSubmit) {
@@ -98,7 +95,7 @@ export function Step4Appointment({
       return slotsError
     }
 
-    return "Aucun creneau horaire disponible a cette date."
+    return 'Aucun creneau horaire disponible a cette date.'
   })()
   const selectedSlot =
     values.appointment.availableSlots.find(
@@ -135,23 +132,23 @@ export function Step4Appointment({
           ) : null}
 
           {!availabilityRequested ? (
-            <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+            <div className="rounded-lg bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
               Completez le type de visa, la variation et la categorie du
               demandeur pour charger les vraies disponibilites Capago.
             </div>
           ) : availabilityLoading ? (
-            <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+            <div className="rounded-lg bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
               Attendez le retour officiel de Capago avant de choisir une date.
             </div>
           ) : availabilityError ? (
-            <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-4 text-sm text-red-700">
               {availabilityError}
             </div>
           ) : showChooseAppointmentBranch ? (
             <div
               className={`grid gap-3 ${
                 showTimePanel
-                  ? 'lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]'
+                  ? '2xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]'
                   : ''
               }`}
             >
@@ -183,13 +180,14 @@ export function Step4Appointment({
                 </FormField>
               </div>
               {showTimePanel ? (
-                <div className="space-y-3 rounded-3xl border border-border/60 bg-slate-50/90 px-4 py-4 shadow-sm">
+                <div className="space-y-3 rounded-lg border border-border/60 bg-slate-50/90 px-4 py-4 shadow-sm">
                   <div className="flex items-center gap-2">
                     <Clock3 className="h-4 w-4 text-primary" />
                     <div>
                       <p className="font-semibold text-foreground">Creneaux</p>
                       <p className="text-xs text-muted-foreground">
-                        Selection par liste compacte, plus proche d&apos;un combobox.
+                        Choisissez l’heure qui vous convient parmi les horaires
+                        disponibles.
                       </p>
                     </div>
                   </div>
@@ -204,7 +202,7 @@ export function Step4Appointment({
                       name="appointment.time"
                       render={({ field }) => (
                         <div className="space-y-3">
-                          <div className="rounded-2xl border border-border/60 bg-white px-4 py-3">
+                          <div className="rounded-lg border border-border/60 bg-white px-4 py-3">
                             <p className="text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">
                               Creneaux disponibles
                             </p>
@@ -226,7 +224,7 @@ export function Step4Appointment({
                           </div>
                           <Select
                             aria-label="Heure de rendez-vous"
-                            className="h-12 rounded-2xl border-border bg-white text-base font-medium"
+                            className="h-12 rounded-lg border-border bg-white text-base font-medium"
                             value={selectedSlot?.label ?? field.value}
                             placeholder="Choisir un creneau"
                             options={slotOptions}
@@ -253,7 +251,7 @@ export function Step4Appointment({
               ) : null}
             </div>
           ) : showQueueBranch ? (
-            <div className="rounded-2xl bg-slate-50 p-4">
+            <div className="rounded-lg bg-slate-50 p-4">
               <div className="mb-3 flex items-center gap-2 font-semibold text-foreground">
                 <ShieldAlert className="h-4 w-4" />
                 Branche file d&apos;attente detectee
@@ -273,7 +271,7 @@ export function Step4Appointment({
                       name={`appointment.queueConditions.${key}`}
                       render={({ field }) => (
                         <label
-                          className={`flex items-start gap-3 rounded-2xl px-4 py-3 text-sm text-foreground transition-colors ${
+                          className={`flex items-start gap-3 rounded-lg px-4 py-3 text-sm text-foreground transition-colors ${
                             queueConditionErrors?.[key]?.message
                               ? 'border border-red-200 bg-red-50/65'
                               : 'bg-white'
@@ -300,7 +298,7 @@ export function Step4Appointment({
               ) : null}
             </div>
           ) : (
-            <div className="rounded-2xl bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
+            <div className="rounded-lg bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
               Attendez le retour officiel de Capago pour afficher la branche
               calendrier ou la branche file d&apos;attente.
             </div>
@@ -333,7 +331,7 @@ export function Step4Appointment({
               )}
             </p>
           ) : null}
-          <div className="rounded-2xl bg-slate-50 p-4">
+          <div className="rounded-lg bg-slate-50 p-4">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <p className="font-semibold text-foreground">
@@ -363,9 +361,7 @@ export function Step4Appointment({
             </div>
             <div
               className={`rounded-xl px-4 py-4 ${
-                captchaReady
-                  ? 'bg-emerald-50/75'
-                  : 'bg-amber-50/70'
+                captchaReady ? 'bg-emerald-50/75' : 'bg-amber-50/70'
               }`}
             >
               <div className="flex items-start gap-3">
@@ -383,7 +379,9 @@ export function Step4Appointment({
                   <p className="text-sm text-muted-foreground">
                     {captchaReady
                       ? "Le jeton reCAPTCHA a ete capture par l'app. Si un probleme survient, cliquez simplement sur 'Repasser la verification'."
-                      : automaticCaptcha ? 'La verification sera effectuee par 2Captcha avant l’envoi.' : "Validez le reCAPTCHA ici ou activez 2Captcha pour la verification automatique."}
+                      : automaticCaptcha
+                        ? 'La verification sera effectuee par 2Captcha avant l’envoi.'
+                        : 'Validez le reCAPTCHA ici ou activez 2Captcha pour la verification automatique.'}
                   </p>
                   {captchaError ? (
                     <p className="text-sm text-red-600">{captchaError}</p>

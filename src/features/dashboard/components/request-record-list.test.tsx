@@ -6,7 +6,9 @@ import { RequestRecordList } from '@/features/dashboard/components/request-recor
 import type { StoredRequestRecord, VisaTypeItem } from '@/lib/api/types'
 import { createEmptyBookingDraft } from '@/lib/state/defaults'
 
-function createRecord(overrides: Partial<StoredRequestRecord>): StoredRequestRecord {
+function createRecord(
+  overrides: Partial<StoredRequestRecord>,
+): StoredRequestRecord {
   return {
     id: overrides.id ?? 'req_1',
     submittedAt: overrides.submittedAt ?? '2026-03-27T10:00:00.000Z',
@@ -17,7 +19,8 @@ function createRecord(overrides: Partial<StoredRequestRecord>): StoredRequestRec
     formula: overrides.formula ?? 'standard',
     travellerCount: overrides.travellerCount ?? 1,
     primaryTravellerName: overrides.primaryTravellerName ?? 'Voyageur Test',
-    primaryTravellerEmail: overrides.primaryTravellerEmail ?? 'voyageur@test.dev',
+    primaryTravellerEmail:
+      overrides.primaryTravellerEmail ?? 'voyageur@test.dev',
     primaryTravellerPhone: overrides.primaryTravellerPhone ?? '0660000000',
     appointmentDate: overrides.appointmentDate ?? '12 Mai 2026',
     appointmentTime: overrides.appointmentTime ?? '9:00 AM',
@@ -61,6 +64,37 @@ describe('RequestRecordList', () => {
     expect(screen.queryByText('Voyageur 1')).not.toBeInTheDocument()
   })
 
+  it('keeps the current search when switching between cards and list', async () => {
+    const user = userEvent.setup()
+    render(
+      <RequestRecordList
+        records={[
+          createRecord({ id: 'alpha', primaryTravellerName: 'Alpha' }),
+          createRecord({ id: 'beta', primaryTravellerName: 'Beta' }),
+        ]}
+        scope="history"
+        onReuseRecord={vi.fn()}
+      />,
+    )
+    await user.type(
+      screen.getByLabelText(/Recherche dans les demandes/i),
+      'Alpha',
+    )
+    await user.click(screen.getByRole('button', { name: /Afficher en liste/i }))
+    expect(
+      screen.getByRole('button', { name: /Afficher en liste/i }),
+    ).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByText('Alpha')).toBeVisible()
+    expect(screen.queryByText('Beta')).not.toBeInTheDocument()
+    await user.click(
+      screen.getByRole('button', { name: /Afficher en cartes/i }),
+    )
+    expect(screen.getByLabelText(/Recherche dans les demandes/i)).toHaveValue(
+      'Alpha',
+    )
+    expect(screen.getByText('Alpha')).toBeVisible()
+  })
+
   it('filters by user and submission date', async () => {
     const user = userEvent.setup()
     const records = [
@@ -95,6 +129,10 @@ describe('RequestRecordList', () => {
       />,
     )
 
+    await user.click(screen.getByRole('button', { name: /filtres avancés/i }))
+    expect(
+      screen.getByRole('button', { name: /filtres avancés/i }),
+    ).toHaveAttribute('aria-expanded', 'true')
     await user.selectOptions(
       screen.getByLabelText(/filtrer par utilisateur/i),
       'agent-b@test.dev',
@@ -104,7 +142,9 @@ describe('RequestRecordList', () => {
     expect(screen.queryByText('Alpha')).not.toBeInTheDocument()
     expect(screen.queryByText('Gamma')).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /reinitialiser les filtres/i }))
+    await user.click(
+      screen.getByRole('button', { name: /reinitialiser les filtres/i }),
+    )
     fireEvent.change(screen.getByLabelText(/date de soumission a partir de/i), {
       target: { value: '2026-03-21' },
     })
@@ -146,7 +186,9 @@ describe('RequestRecordList', () => {
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(screen.queryByText('Beta')).not.toBeInTheDocument()
 
-    await user.click(screen.getByRole('button', { name: /reinitialiser les filtres/i }))
+    await user.click(
+      screen.getByRole('button', { name: /reinitialiser les filtres/i }),
+    )
 
     expect(screen.getByText('Alpha')).toBeInTheDocument()
     expect(screen.getByText('Beta')).toBeInTheDocument()
@@ -181,7 +223,8 @@ describe('RequestRecordList', () => {
     expect(screen.getByText('Beta')).toBeInTheDocument()
   })
 
-  it('shows all voyageurs for a multi-traveller request', () => {
+  it('expands all voyageurs for a multi-traveller request', async () => {
+    const user = userEvent.setup()
     const draft = createEmptyBookingDraft()
     draft.travellers = [
       {
@@ -219,9 +262,11 @@ describe('RequestRecordList', () => {
       />,
     )
 
-    expect(screen.getByText(/Tous les voyageurs/i)).toBeInTheDocument()
+    expect(screen.getByText(/Voyageur 2: Ishak Belhisset/i)).not.toBeVisible()
+    await user.click(screen.getByText(/Tous les voyageurs/i))
+    expect(screen.getByText(/Voyageur 2: Ishak Belhisset/i)).toBeVisible()
     expect(screen.getByText(/Voyageur 1: Ayoub Belhisset/i)).toBeInTheDocument()
-    expect(screen.getByText(/Voyageur 2: Ishak Belhisset/i)).toBeInTheDocument()
+    expect(screen.getByText(/Voyageur 2: Ishak Belhisset/i)).toBeVisible()
   })
 
   it('searches across secondary voyageurs in the request snapshot', async () => {
@@ -262,7 +307,7 @@ describe('RequestRecordList', () => {
       'Ishak',
     )
 
-    expect(screen.getByText(/Voyageur 2: Ishak Belhisset/i)).toBeInTheDocument()
+    expect(screen.getByText(/Voyageur 2: Ishak Belhisset/i)).toBeVisible()
   })
 
   it('opens a details dialog with visa and contact information', async () => {
@@ -324,7 +369,11 @@ describe('RequestRecordList', () => {
           }),
         ]}
         scope="history"
-        visaTypes={visaTypes}
+        visaTypes={visaTypes.map((item) => ({
+          ...item,
+          label: 'Libellé d’un autre centre',
+        }))}
+        visaTypesByCenter={{ capago_CZL: visaTypes }}
         visaFileVariations={[
           {
             id: 'primo_demand',
@@ -340,9 +389,20 @@ describe('RequestRecordList', () => {
 
     const dialog = screen.getByRole('dialog', { name: /nadia dossier/i })
     expect(within(dialog).getByText('Visa tourisme')).toBeInTheDocument()
+    expect(
+      within(dialog).queryByText('Libellé d’un autre centre'),
+    ).not.toBeInTheDocument()
     expect(within(dialog).getAllByText('0555000111')).not.toHaveLength(0)
     expect(within(dialog).getByText('AB123456')).toBeInTheDocument()
     expect(within(dialog).getByText('Assistance demandee')).toBeInTheDocument()
     expect(within(dialog).getByText('Premiere demande')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /fermer les details/i }),
+    ).toHaveFocus()
+    await user.tab()
+    expect(dialog).toContainElement(document.activeElement as HTMLElement)
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /details/i })).toHaveFocus()
   })
 })

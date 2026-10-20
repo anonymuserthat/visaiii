@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
-
+import { useId, type ReactNode } from 'react'
 import { Label } from '@/components/ui/label'
+import { FieldContext } from '@/components/ui/field-context'
 
 interface FormFieldProps {
   label: string
@@ -17,14 +17,36 @@ export function FormField({
   error,
   children,
 }: FormFieldProps) {
+  const generatedId = useId()
+  const id = htmlFor ?? generatedId
+  const labelId = `${id}-label`
+  const hintId = hint ? `${id}-hint` : undefined
+  const errorId = error ? `${id}-error` : undefined
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between gap-3">
-        <Label htmlFor={htmlFor}>{label}</Label>
-        {hint ? <span className="text-xs text-muted-foreground">{hint}</span> : null}
+    <FieldContext.Provider
+      value={{
+        id,
+        labelId,
+        descriptionId: [hintId, errorId].filter(Boolean).join(' ') || undefined,
+        invalid: Boolean(error),
+      }}
+    >
+      <div className="form-field">
+        <Label id={labelId} htmlFor={id}>
+          {label}
+        </Label>
+        {children}
+        {hint ? (
+          <p id={hintId} className="field-hint">
+            {hint}
+          </p>
+        ) : null}
+        {error ? (
+          <p id={errorId} className="field-error" role="alert">
+            {error}
+          </p>
+        ) : null}
       </div>
-      {children}
-      {error ? <p className="text-sm text-red-600">{error}</p> : null}
-    </div>
+    </FieldContext.Provider>
   )
 }

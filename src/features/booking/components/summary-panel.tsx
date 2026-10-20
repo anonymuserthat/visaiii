@@ -88,13 +88,7 @@ function getSelectedAppointmentTimeLabel(values: BookingFormValues) {
   return matchedSlot?.label ?? formatStoredSlotValue(values.appointment.time)
 }
 
-function ReviewRow({
-  label,
-  value,
-}: {
-  label: string
-  value: string
-}) {
+function ReviewRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="grid gap-1 sm:grid-cols-[104px_minmax(0,1fr)] sm:gap-3">
       <p className="text-xs font-medium uppercase tracking-[0.14em] text-muted-foreground">
@@ -143,27 +137,27 @@ export function SummaryPanel({
     currentStep === 4 &&
     Boolean(
       values.appointment.date ||
-        values.appointment.dateSubmit ||
-        values.appointment.time ||
-        values.appointment.captchaToken,
+      values.appointment.dateSubmit ||
+      values.appointment.time ||
+      values.appointment.captchaToken,
     )
 
   const serviceReviewRows = [
     values.optionalServices.portrait === 'yes_portrait'
       ? { label: 'Photos', value: 'Realisees au centre' }
       : values.optionalServices.portrait === 'no_portrait'
-      ? { label: 'Photos', value: 'Photos personnelles' }
-      : null,
+        ? { label: 'Photos', value: 'Photos personnelles' }
+        : null,
     values.optionalServices.relation === 'yes_relation'
       ? { label: 'Assurance', value: 'Rappel demande' }
       : values.optionalServices.relation === 'no_relation'
-      ? { label: 'Assurance', value: 'Non souhaite' }
-      : null,
+        ? { label: 'Assurance', value: 'Non souhaite' }
+        : null,
     values.optionalServices.deliveryVisa === 'home_delivery'
       ? { label: 'Passeport', value: 'Livraison a domicile ou au travail' }
       : values.optionalServices.deliveryVisa === 'me_delivery'
-      ? { label: 'Passeport', value: 'Retrait au centre' }
-      : null,
+        ? { label: 'Passeport', value: 'Retrait au centre' }
+        : null,
     {
       label: 'Suivi SMS',
       value: values.optionalServices.followSms ? 'Active' : 'Non active',
@@ -178,12 +172,12 @@ export function SummaryPanel({
   ].filter(Boolean) as Array<{ label: string; value: string }>
 
   return (
-    <Card className="sticky top-3 overflow-hidden border-border/60 bg-white">
+    <Card className="booking-summary">
       <CardHeader className="pb-1">
-        <Badge className="w-fit">Review rapide</Badge>
-        <CardTitle>Verifier avant de continuer</CardTitle>
+        <Badge className="w-fit">Votre dossier</Badge>
+        <CardTitle>Récapitulatif</CardTitle>
         <CardDescription>
-          Les informations deja validees s'ajoutent ici au fil des etapes.
+          Votre dossier se complète au fil des étapes.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -193,13 +187,19 @@ export function SummaryPanel({
               <div className="flex items-start gap-2.5 text-sm text-foreground">
                 <MapPin className="mt-0.5 h-4 w-4 text-primary" />
                 <div>
-                  <p className="font-medium">{currentCenter?.label || 'Centre non selectionne'}</p>
+                  <p className="font-medium">
+                    {currentCenter?.label || 'Centre non selectionne'}
+                  </p>
                   <p className="text-muted-foreground">
-                    {values.nbTravellers} voyageur{values.nbTravellers > 1 ? 's' : ''}
+                    {values.nbTravellers} voyageur
+                    {values.nbTravellers > 1 ? 's' : ''}
                   </p>
                 </div>
               </div>
-              <ReviewRow label="Formule" value={formatFormulaLabel(values.formula)} />
+              <ReviewRow
+                label="Formule"
+                value={formatFormulaLabel(values.formula)}
+              />
               <ReviewRow
                 label="Conditions"
                 value={values.cgv ? 'Acceptees' : 'En attente'}
@@ -311,7 +311,10 @@ export function SummaryPanel({
                         Voyageur {index + 1}
                       </p>
                       {index === 0 ? (
-                        <Badge variant="secondary" className="px-2 py-0 text-[11px]">
+                        <Badge
+                          variant="secondary"
+                          className="px-2 py-0 text-[11px]"
+                        >
                           Principal
                         </Badge>
                       ) : null}
@@ -329,7 +332,8 @@ export function SummaryPanel({
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Les informations du voyageur apparaitront ici apres validation.
+                        Les informations du voyageur apparaitront ici apres
+                        validation.
                       </p>
                     )}
 
@@ -361,9 +365,14 @@ export function SummaryPanel({
             {serviceReviewRows.length > 0 ? (
               <div className="space-y-2">
                 {serviceReviewRows.map((row) => (
-                  <ReviewRow key={row.label} label={row.label} value={row.value} />
+                  <ReviewRow
+                    key={row.label}
+                    label={row.label}
+                    value={row.value}
+                  />
                 ))}
-                {values.optionalServices.followSms && values.optionalServices.smsMobile ? (
+                {values.optionalServices.followSms &&
+                values.optionalServices.smsMobile ? (
                   <ReviewRow
                     label="Numero SMS"
                     value={values.optionalServices.smsMobile}
@@ -387,7 +396,9 @@ export function SummaryPanel({
                   <p className="font-medium">
                     {values.appointment.chooseAppointmentDate
                       ? values.appointment.dateSubmit
-                        ? formatAppointmentDateLabel(values.appointment.dateSubmit)
+                        ? formatAppointmentDateLabel(
+                            values.appointment.dateSubmit,
+                          )
                         : values.appointment.date || 'Date non selectionnee'
                       : "Mode file d'attente"}
                   </p>
@@ -403,7 +414,9 @@ export function SummaryPanel({
                 <CheckCircle2
                   className={cn(
                     'mt-0.5 h-4 w-4',
-                    values.appointment.captchaToken ? 'text-emerald-600' : 'text-slate-400',
+                    values.appointment.captchaToken
+                      ? 'text-emerald-600'
+                      : 'text-slate-400',
                   )}
                 />
                 <div>
@@ -425,7 +438,8 @@ export function SummaryPanel({
 
         {!reachedStep1 ? (
           <div className="rounded-xl bg-slate-50/70 px-3 py-4 text-sm text-muted-foreground">
-            Le resume commencera a se remplir apres validation de la premiere etape.
+            Le resume commencera a se remplir apres validation de la premiere
+            etape.
           </div>
         ) : null}
 
@@ -435,8 +449,8 @@ export function SummaryPanel({
             Relecture rapide
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Ce panneau remplace la liste technique et garde seulement les choix utiles
-            avant la soumission.
+            Vérifiez les informations de chaque voyageur avant de soumettre
+            votre demande.
           </p>
         </div>
       </CardContent>

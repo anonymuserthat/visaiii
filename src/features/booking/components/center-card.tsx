@@ -19,7 +19,10 @@ function truncateText(value: string, maxLength: number) {
 }
 
 export function CenterCard({ center, selected, onSelect }: CenterCardProps) {
-  const badgeLabel = center.code.replace(/^capago_/i, '').replace(/_/g, ' ').toUpperCase()
+  const badgeLabel = center.code
+    .replace(/^capago_/i, '')
+    .replace(/_/g, ' ')
+    .toUpperCase()
   const premiumDescription = center.premiumDescription
     ? truncateText(center.premiumDescription, 180)
     : null
@@ -31,16 +34,16 @@ export function CenterCard({ center, selected, onSelect }: CenterCardProps) {
       aria-pressed={selected}
       aria-label={`Choisir ${center.city}`}
       className={cn(
-        'group relative overflow-hidden rounded-xl border px-3 py-3 text-left transition-colors',
+        'group relative overflow-hidden rounded-xl border p-4 text-left transition-colors',
         selected
-          ? 'border-primary/25 bg-primary/5'
+          ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
           : 'border-border/80 bg-white hover:border-primary/20',
       )}
     >
       <div className="mb-3 flex items-start justify-between gap-3">
         <div>
           <Badge variant={selected ? 'default' : 'outline'}>{badgeLabel}</Badge>
-          <p className="mt-2 font-display text-xl font-semibold text-foreground">
+          <p className="mt-2 font-display text-lg font-semibold text-foreground">
             {center.city}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">{center.label}</p>
@@ -50,7 +53,7 @@ export function CenterCard({ center, selected, onSelect }: CenterCardProps) {
             'inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em]',
             selected
               ? 'bg-primary text-primary-foreground'
-              : 'bg-slate-100 text-slate-500 group-hover:bg-primary/10 group-hover:text-primary',
+              : 'bg-slate-100 text-slate-600 group-hover:bg-primary/10 group-hover:text-primary',
           )}
         >
           {selected ? <Check className="h-3.5 w-3.5" /> : null}
@@ -67,7 +70,12 @@ export function CenterCard({ center, selected, onSelect }: CenterCardProps) {
             <p className="font-semibold">{center.premiumHeadline}</p>
           ) : null}
           {premiumDescription ? (
-            <p className={cn('text-muted-foreground', center.premiumHeadline ? 'mt-1' : '')}>
+            <p
+              className={cn(
+                'text-muted-foreground',
+                center.premiumHeadline ? 'mt-1' : '',
+              )}
+            >
               {premiumDescription}
             </p>
           ) : null}

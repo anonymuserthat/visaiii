@@ -1,4 +1,4 @@
-# Damander Visa 0.2.0 — installation et recuperation des donnees
+# Damander Visa 0.3.0 — installation et recuperation des donnees
 
 ## Avant de mettre a jour un ancien ordinateur
 
@@ -11,22 +11,23 @@
 Prerequis : Windows, Node.js compatible Vite 8, Rust (rustup), Microsoft C++ Build Tools et les outils NSIS/WiX necessaires au bundle Tauri. Dans PowerShell, a la racine du projet :
 
 ```powershell
-npm ci
-npm run typecheck
-npm test
-npm run build:tauri
+./scripts/build-windows.ps1
 ```
 
-Installateurs attendus sous `src-tauri\target\release\bundle\nsis\` et `src-tauri\target\release\bundle\msi\`.
+L'installateur NSIS 0.3.0 est produit sous `src-tauri\target\release\bundle\nsis\`. Le script installe les dependances avec le lockfile, execute les controles TypeScript et les tests, puis construit l'application Windows. L'option `-Demo` construit une version avec les fixtures; sans cette option, le mode reel est utilise.
 
-Version mise a jour de **0.1.0 vers 0.2.0** afin d'eviter la confusion avec les anciens installateurs. Aucun nouvel executable Windows precompile n'est fourni dans cette archive de sources.
+La version **0.3.0** identifie la nouvelle interface. Modifier les sources ou executer `npm run build` ne met pas a jour un EXE deja installe : il faut construire puis installer le nouveau paquet. La barre de titre Windows et le pied de page affichent 0.3.0. L'identifiant `eu.damander.visa` reste identique pour conserver l'emplacement des donnees.
+
+Le push sur la branche `codex/ui-redesign-v0.3.0` declenche automatiquement la construction Windows. Pour la relancer manuellement, apres avoir pousse les sources et le fichier `.github/workflows/windows-installer.yml`, ouvrez GitHub Actions, selectionnez **Windows 0.3 installer**, puis **Run workflow** sur la branche contenant ces changements. Telechargez l'artefact **Damander-Visa-0.3.0-Windows** du run reussi. La presence du workflow dans les sources ne signifie pas qu'un installateur a deja ete construit.
+
+Les fichiers `.env` de developpement ne sont plus inclus dans le paquet. Les parametres du PC se configurent dans l'application ou via un fichier local fourni separement.
 
 ## Installer sur le nouveau PC
 
-1. Installez la version 0.2.0 et ouvrez l'application.
-2. Dans la colonne de gauche, trouvez **Base de donnees partagee** et cliquez **Configurer**.
+1. Installez la version 0.3.0 et ouvrez l'application.
+2. Ouvrez **Mon profil** en haut a droite, puis **Base de donnees partagee > Configurer**.
 3. Collez l'URL PostgreSQL/CockroachDB obtenue aupres de l'administrateur. Elle doit correspondre a **la meme base** que celle utilisee par les autres PC. Cliquez **Tester et enregistrer**. L'ancienne URL reste active si le test echoue.
-4. Cliquez **Actualiser**. Verifiez le statut **Connectee**, le nombre de dossiers sur le serveur et la page **History**. Si le nombre est 0, confirmez la base choisie et la table `visa_request_records` avec votre administrateur.
+4. Cliquez **Actualiser**. Verifiez le statut **Connectee**, le nombre de dossiers sur le serveur et la page **Dossiers**. Si le nombre est 0, confirmez la base choisie et la table `visa_request_records` avec votre administrateur.
 5. Si le statut est rouge, l'erreur indique maintenant l'etape bloquante (DNS, serveur injoignable, SSL/certificat, identifiants, table manquante, permissions SQL). Testez l'acces Internet, le VPN, les pare-feu et les identifiants DB avec l'administrateur.
 
 Sur un PC qui marchait auparavant, utilisez le meme panneau pour reconfigurer la connexion si son ancien mot de passe, l'adresse du serveur ou son certificat a change. Les dossiers locaux restent accessibles hors ligne.

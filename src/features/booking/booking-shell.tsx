@@ -48,7 +48,10 @@ import {
   createEmptyBookingDraft,
   createEmptyTraveller,
 } from '@/lib/state/defaults'
-import { createBookingSchema, getStepFieldPaths } from '@/lib/validation/bookingSchemas'
+import {
+  createBookingSchema,
+  getStepFieldPaths,
+} from '@/lib/validation/bookingSchemas'
 import {
   useAvailableSlotsQuery,
   useUnavailableDaysQuery,
@@ -163,28 +166,29 @@ function hasDraftContent(values: BookingFormValues) {
     return true
   }
 
-  return values.travellers.some((traveller) =>
-    [
-      traveller.title,
-      traveller.lastname,
-      traveller.firstname,
-      traveller.dayBirth,
-      traveller.monthBirth,
-      traveller.yearBirth,
-      traveller.phone,
-      traveller.email,
-      traveller.emailConfirm,
-      traveller.passportNumber,
-      traveller.dayDepartureDate,
-      traveller.monthDepartureDate,
-      traveller.yearDepartureDate,
-      traveller.visaStayDuration,
-      traveller.travelPurpose,
-      traveller.typeVisa,
-      traveller.precision1,
-      traveller.precision2,
-      traveller.visaFileVariation,
-    ].some(Boolean) ||
+  return values.travellers.some(
+    (traveller) =>
+      [
+        traveller.title,
+        traveller.lastname,
+        traveller.firstname,
+        traveller.dayBirth,
+        traveller.monthBirth,
+        traveller.yearBirth,
+        traveller.phone,
+        traveller.email,
+        traveller.emailConfirm,
+        traveller.passportNumber,
+        traveller.dayDepartureDate,
+        traveller.monthDepartureDate,
+        traveller.yearDepartureDate,
+        traveller.visaStayDuration,
+        traveller.travelPurpose,
+        traveller.typeVisa,
+        traveller.precision1,
+        traveller.precision2,
+        traveller.visaFileVariation,
+      ].some(Boolean) ||
       traveller.renewal ||
       traveller.followSms ||
       traveller.franceVisasAssistance,
@@ -215,9 +219,7 @@ function extractQueryMessage(error: unknown, fallback: string) {
 
 function isSelectedDayStillAvailable(
   selectedDay: string,
-  availability: NonNullable<
-    ReturnType<typeof useUnavailableDaysQuery>['data']
-  >,
+  availability: NonNullable<ReturnType<typeof useUnavailableDaysQuery>['data']>,
 ) {
   if (!selectedDay) {
     return true
@@ -241,11 +243,17 @@ function isSelectedDayStillAvailable(
     }
   }
 
-  if (availability.firstDay && normalizedSelectedDay < normalizeIsoDayString(availability.firstDay)) {
+  if (
+    availability.firstDay &&
+    normalizedSelectedDay < normalizeIsoDayString(availability.firstDay)
+  ) {
     return false
   }
 
-  if (availability.lastDay && normalizedSelectedDay > normalizeIsoDayString(availability.lastDay)) {
+  if (
+    availability.lastDay &&
+    normalizedSelectedDay > normalizeIsoDayString(availability.lastDay)
+  ) {
     return false
   }
 
@@ -256,9 +264,7 @@ interface BookingShellProps {
   currentUser?: CurrentUserProfile | null
 }
 
-export function BookingShell({
-  currentUser = null,
-}: BookingShellProps) {
+export function BookingShell({ currentUser = null }: BookingShellProps) {
   const queryClient = useQueryClient()
   const {
     globalParamsQuery,
@@ -273,18 +279,28 @@ export function BookingShell({
   const markStepCompleted = useBookingStore((state) => state.markStepCompleted)
   const hydrateDraft = useBookingStore((state) => state.hydrateDraft)
   const resetDraft = useBookingStore((state) => state.resetDraft)
-  const setSelectedCenterId = useBookingStore((state) => state.setSelectedCenterId)
+  const setSelectedCenterId = useBookingStore(
+    (state) => state.setSelectedCenterId,
+  )
   const selectedCenterId = useBookingStore((state) => state.selectedCenterId)
   const globalParams = useBookingStore((state) => state.globalParams)
   const socialTitles = useBookingStore((state) => state.socialTitles)
-  const visaFileVariations = useBookingStore((state) => state.visaFileVariations)
+  const visaFileVariations = useBookingStore(
+    (state) => state.visaFileVariations,
+  )
   const services = useBookingStore((state) => state.services)
   const visaTypes = useBookingStore((state) => state.visaTypes)
   const currentCenter = useBookingStore(selectCurrentCenter)
   const setAvailability = useBookingStore((state) => state.setAvailability)
-  const setSubmissionFailure = useBookingStore((state) => state.setSubmissionFailure)
-  const setSubmissionStatus = useBookingStore((state) => state.setSubmissionStatus)
-  const setSubmissionSuccess = useBookingStore((state) => state.setSubmissionSuccess)
+  const setSubmissionFailure = useBookingStore(
+    (state) => state.setSubmissionFailure,
+  )
+  const setSubmissionStatus = useBookingStore(
+    (state) => state.setSubmissionStatus,
+  )
+  const setSubmissionSuccess = useBookingStore(
+    (state) => state.setSubmissionSuccess,
+  )
   const clearSubmission = useBookingStore((state) => state.clearSubmission)
   const submissionStatus = useBookingStore((state) => state.submissionStatus)
   const lastSuccess = useBookingStore((state) => state.lastSuccess)
@@ -293,12 +309,18 @@ export function BookingShell({
   const formSeedRef = useRef<BookingFormValues>(
     applyBookingDraftDefaults(useBookingStore.getState().draft),
   )
-  const previousAreaRef = useRef<string | null>(formSeedRef.current.area || null)
+  const previousAreaRef = useRef<string | null>(
+    formSeedRef.current.area || null,
+  )
   const lastPersistedDraftRef = useRef(JSON.stringify(formSeedRef.current))
   const latestSessionIdRef = useRef('')
+  const initializedPrimaryEmailRef = useRef<string | null>(null)
+  const formElementRef = useRef<HTMLFormElement>(null)
+  const [validationAttempted, setValidationAttempted] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<string>('')
   const [verificationOpening, setVerificationOpening] = useState(false)
-  const [captchaSettings, setCaptchaSettings] = useState<CaptchaSettings | null>(null)
+  const [captchaSettings, setCaptchaSettings] =
+    useState<CaptchaSettings | null>(null)
   const [solvingCaptcha, setSolvingCaptcha] = useState(false)
   const submittingRef = useRef(false)
   const automaticCaptcha = canSolveAutomatically(captchaSettings)
@@ -330,7 +352,8 @@ export function BookingShell({
   } = form
 
   const liveValues =
-    (useWatch({ control }) as BookingFormValues | undefined) ?? formSeedRef.current
+    (useWatch({ control }) as BookingFormValues | undefined) ??
+    formSeedRef.current
   const visibleServices = services.filter((service) =>
     liveValues.formula ? service.formulas.includes(liveValues.formula) : true,
   )
@@ -406,7 +429,10 @@ export function BookingShell({
       void bookingClient
         .loadDraft()
         .then((storedDraft) => {
-          if (!storedDraft || storedDraft.version !== RUNTIME_CONFIG.draftVersion) {
+          if (
+            !storedDraft ||
+            storedDraft.version !== RUNTIME_CONFIG.draftVersion
+          ) {
             return
           }
 
@@ -416,6 +442,7 @@ export function BookingShell({
           previousAreaRef.current = normalizedDraft.area || null
           lastPersistedDraftRef.current = JSON.stringify(storedDraft.values)
           hydrateDraft(normalizedDraft)
+          initializedPrimaryEmailRef.current = null
           reset(normalizedDraft)
           toast.success('Brouillon restaure')
         })
@@ -459,7 +486,10 @@ export function BookingShell({
   }, [liveValues.area, selectedCenterId, setValue])
 
   useEffect(() => {
-    const expectedTravellerCount = Math.max(1, Number(liveValues.nbTravellers) || 1)
+    const expectedTravellerCount = Math.max(
+      1,
+      Number(liveValues.nbTravellers) || 1,
+    )
     const currentTravellerCount = liveValues.travellers.length
 
     if (currentTravellerCount === expectedTravellerCount) {
@@ -472,7 +502,8 @@ export function BookingShell({
             ...liveValues.travellers,
             ...Array.from(
               { length: expectedTravellerCount - currentTravellerCount },
-              (_, offset) => createEmptyTraveller(currentTravellerCount + offset),
+              (_, offset) =>
+                createEmptyTraveller(currentTravellerCount + offset),
             ),
           ]
         : liveValues.travellers.slice(0, expectedTravellerCount)
@@ -514,7 +545,9 @@ export function BookingShell({
 
     liveValues.travellers.forEach((traveller, index) => {
       if (traveller.visaStayDuration) {
-        setValue(`travellers.${index}.visaStayDuration`, '', { shouldDirty: true })
+        setValue(`travellers.${index}.visaStayDuration`, '', {
+          shouldDirty: true,
+        })
       }
       if (traveller.travelPurpose) {
         setValue(`travellers.${index}.travelPurpose`, '', { shouldDirty: true })
@@ -550,7 +583,9 @@ export function BookingShell({
     }
 
     if (!liveValues.optionalServices.portrait) {
-      setValue('optionalServices.portrait', 'no_portrait', { shouldDirty: false })
+      setValue('optionalServices.portrait', 'no_portrait', {
+        shouldDirty: false,
+      })
     }
 
     if (!liveValues.optionalServices.deliveryVisa) {
@@ -564,7 +599,10 @@ export function BookingShell({
       !liveValues.optionalServices.deliveryContact.lastname &&
       primaryTraveller.lastname
     ) {
-      setValue('optionalServices.deliveryContact.lastname', primaryTraveller.lastname)
+      setValue(
+        'optionalServices.deliveryContact.lastname',
+        primaryTraveller.lastname,
+      )
     }
 
     if (
@@ -572,7 +610,10 @@ export function BookingShell({
       !liveValues.optionalServices.deliveryContact.firstname &&
       primaryTraveller.firstname
     ) {
-      setValue('optionalServices.deliveryContact.firstname', primaryTraveller.firstname)
+      setValue(
+        'optionalServices.deliveryContact.firstname',
+        primaryTraveller.firstname,
+      )
     }
 
     if (
@@ -602,6 +643,9 @@ export function BookingShell({
     }
 
     const primaryTraveller = liveValues.travellers[0]
+    const prefillKey = `${primaryTraveller.id}:${currentUserEmail}`
+    if (initializedPrimaryEmailRef.current === prefillKey) return
+    initializedPrimaryEmailRef.current = prefillKey
 
     if (!primaryTraveller.email) {
       setValue('travellers.0.email', currentUserEmail, { shouldDirty: false })
@@ -745,15 +789,33 @@ export function BookingShell({
     servicesQuery.isLoading ||
     visaTypesQuery.isLoading
 
+  function focusFirstInvalidField() {
+    window.requestAnimationFrame(() => {
+      const invalid = formElementRef.current?.querySelector<HTMLElement>(
+        '[aria-invalid="true"]',
+      )
+      const panel = invalid?.closest('details')
+      if (panel) panel.open = true
+      const target = invalid?.matches('[role="radiogroup"]')
+        ? invalid.querySelector<HTMLElement>('[role="radio"]')
+        : invalid
+      target?.focus()
+      target?.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+    })
+  }
+
   async function handleNextStep() {
     const isValid = await trigger(
       getStepFieldPaths(currentStep, getValues(), services),
     )
     if (!isValid) {
+      setValidationAttempted(true)
+      focusFirstInvalidField()
       toast.error('Certains champs doivent etre corriges avant de continuer.')
       return
     }
 
+    setValidationAttempted(false)
     markStepCompleted(currentStep)
     setCurrentStep(Math.min(4, currentStep + 1) as 1 | 2 | 3 | 4)
     await recordAudit('step_completed', `Etape ${currentStep} validee`)
@@ -785,11 +847,14 @@ export function BookingShell({
       previousAreaRef.current = normalizedDraft.area || null
       lastPersistedDraftRef.current = JSON.stringify(imported.values)
       hydrateDraft(normalizedDraft)
+      initializedPrimaryEmailRef.current = null
       reset(normalizedDraft)
       toast.success('Brouillon importe')
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Import du brouillon impossible.',
+        error instanceof Error
+          ? error.message
+          : 'Import du brouillon impossible.',
       )
     }
   }
@@ -799,6 +864,7 @@ export function BookingShell({
     formSeedRef.current = fresh
     previousAreaRef.current = fresh.area || null
     lastPersistedDraftRef.current = JSON.stringify(fresh)
+    initializedPrimaryEmailRef.current = null
     resetDraft()
     reset(fresh)
     clearSubmission()
@@ -812,7 +878,7 @@ export function BookingShell({
       toast.error("Renseignez d'abord l'utilisateur actif avant de soumettre.")
       await recordAudit(
         'submit_blocked',
-        "Soumission bloquee: utilisateur actif non renseigne",
+        'Soumission bloquee: utilisateur actif non renseigne',
       )
       return
     }
@@ -830,14 +896,23 @@ export function BookingShell({
         setSolvingCaptcha(true)
         try {
           const token = await solveCaptcha()
-          values = { ...values, appointment: { ...values.appointment, captchaToken: token } }
+          values = {
+            ...values,
+            appointment: { ...values.appointment, captchaToken: token },
+          }
         } catch (reason) {
           const message = String(reason)
           setError('appointment.captchaToken', { type: 'solver', message })
-          setSubmissionFailure({ status: 0, fieldErrors: [], rawMessages: [message] })
+          setSubmissionFailure({
+            status: 0,
+            fieldErrors: [],
+            rawMessages: [message],
+          })
           toast.error(message)
           return
-        } finally { setSolvingCaptcha(false) }
+        } finally {
+          setSolvingCaptcha(false)
+        }
       }
 
       const payload = buildBookingPayload(
@@ -894,7 +969,11 @@ export function BookingShell({
       await recordAudit('submit_success', `Statut ${result.status}`)
     } catch (reason) {
       const message = String(reason)
-      setSubmissionFailure({ status: 0, fieldErrors: [], rawMessages: [message] })
+      setSubmissionFailure({
+        status: 0,
+        fieldErrors: [],
+        rawMessages: [message],
+      })
       toast.error(message)
     } finally {
       // Tokens are single-use; never reuse one after an attempted submission.
@@ -904,8 +983,12 @@ export function BookingShell({
   }
 
   async function onInvalidSubmit(submitErrors: FieldErrors<BookingFormValues>) {
+    setValidationAttempted(true)
+    focusFirstInvalidField()
     const firstInvalidPath = flattenErrorPaths(submitErrors)[0] ?? null
-    const blockedStep = firstInvalidPath ? getStepFromErrorPath(firstInvalidPath) : 4
+    const blockedStep = firstInvalidPath
+      ? getStepFromErrorPath(firstInvalidPath)
+      : 4
 
     setSubmissionStatus('idle')
 
@@ -933,15 +1016,44 @@ export function BookingShell({
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="space-y-4">
-        <Stepper currentStep={currentStep} completedSteps={completedSteps} />
-
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border/70 bg-white px-4 py-3">
+    <div className="booking-layout">
+      <Stepper
+        currentStep={currentStep}
+        completedSteps={completedSteps}
+        onStepChange={(step) => {
+          if (!isSubmitting) setCurrentStep(step)
+        }}
+      />
+      <div className="booking-main space-y-5">
+        <div className="booking-stage-heading">
+          <span>
+            {String(currentStep).padStart(2, '0')}
+            <small>/ 04</small>
+          </span>
           <div>
-            <p className="text-sm font-semibold text-foreground">Brouillon local</p>
+            <p>DEMANDE DE VISA</p>
+            <h2>
+              {
+                [
+                  'Choisissez votre point de départ',
+                  'Faisons connaissance avec vos voyageurs',
+                  'Composez votre accompagnement',
+                  'Finalisez votre rendez-vous',
+                ][currentStep - 1]
+              }
+            </h2>
+          </div>
+        </div>
+
+        <div className="draft-toolbar">
+          <div>
+            <p className="text-sm font-semibold text-foreground">
+              Brouillon local
+            </p>
             <p className="text-sm text-muted-foreground">
-              {lastSavedAt ? `Derniere sauvegarde a ${lastSavedAt}` : 'Autosauvegarde active'}
+              {lastSavedAt
+                ? `Derniere sauvegarde a ${lastSavedAt}`
+                : 'Autosauvegarde active'}
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -973,7 +1085,26 @@ export function BookingShell({
           />
         ) : null}
 
-        <form className="space-y-4" onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}>
+        <form
+          ref={formElementRef}
+          className="space-y-4"
+          onSubmit={handleSubmit(onSubmit, onInvalidSubmit)}
+        >
+          {validationAttempted && flattenErrorPaths(errors).length > 0 ? (
+            <div className="validation-summary" role="alert">
+              <strong>
+                {flattenErrorPaths(errors).length} champ
+                {flattenErrorPaths(errors).length > 1 ? 's' : ''} à vérifier
+              </strong>
+              <p>
+                Votre dossier est conservé. Corrigez les champs signalés avant
+                de continuer.
+              </p>
+              <button type="button" onClick={focusFirstInvalidField}>
+                Aller au premier champ à corriger
+              </button>
+            </div>
+          ) : null}
           {currentStep === 1 ? (
             <Step1Setup
               control={control}
@@ -1067,7 +1198,7 @@ export function BookingShell({
             />
           ) : null}
 
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="booking-actions">
             <Button
               type="button"
               variant="secondary"
@@ -1087,7 +1218,9 @@ export function BookingShell({
                 disabled={isSubmitting || submissionStatus === 'submitting'}
               >
                 {isSubmitting || submissionStatus === 'submitting'
-                  ? solvingCaptcha ? 'Resolution du CAPTCHA...' : 'Soumission...'
+                  ? solvingCaptcha
+                    ? 'Resolution du CAPTCHA...'
+                    : 'Soumission...'
                   : 'Soumettre la demande'}
               </Button>
             )}

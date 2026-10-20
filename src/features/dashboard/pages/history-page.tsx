@@ -1,6 +1,7 @@
 import { FolderClock } from 'lucide-react'
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/workspace/empty-state'
+import { Card, CardContent } from '@/components/ui/card'
 import { RequestRecordList } from '@/features/dashboard/components/request-record-list'
 import type {
   CurrentUserProfile,
@@ -17,6 +18,7 @@ interface HistoryPageProps {
   currentUser?: CurrentUserProfile | null
   socialTitles?: SocialTitle[]
   visaFileVariations?: VisaFileVariation[]
+  visaTypesByCenter?: Record<string, VisaTypeItem[]>
   visaTypes?: VisaTypeItem[]
   onReuseRecord: (
     record: StoredRequestRecord,
@@ -31,6 +33,7 @@ export function HistoryPage({
   socialTitles = [],
   visaFileVariations = [],
   visaTypes = [],
+  visaTypesByCenter = {},
   onReuseRecord,
 }: HistoryPageProps) {
   if (isLoading) {
@@ -46,19 +49,16 @@ export function HistoryPage({
   if (records.length === 0) {
     return (
       <Card>
-        <CardHeader>
-          <CardTitle>Aucune demande enregistree</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3 text-sm text-muted-foreground">
-          <div className="flex items-center gap-2 text-foreground">
-            <FolderClock className="h-4 w-4" />
-            Les soumissions reussies apparaitront ici automatiquement.
-          </div>
+        <EmptyState
+          icon={<FolderClock size={28} strokeWidth={1.5} />}
+          title="Votre historique commence ici"
+        >
           <p>
-            Chaque entree conserve le dossier complet pour le retrouver ou le
-            reutiliser plus tard.
+            Vos demandes soumises apparaîtront ici. Vous pourrez consulter
+            chaque dossier, retrouver une confirmation et réutiliser les
+            informations des voyageurs.
           </p>
-        </CardContent>
+        </EmptyState>
       </Card>
     )
   }
@@ -71,6 +71,7 @@ export function HistoryPage({
       socialTitles={socialTitles}
       visaFileVariations={visaFileVariations}
       visaTypes={visaTypes}
+      visaTypesByCenter={visaTypesByCenter}
       onReuseRecord={onReuseRecord}
       onOpenConfirmation={(currentRecord) => {
         if (currentRecord.confirmationLocation) {

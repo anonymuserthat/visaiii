@@ -75,6 +75,17 @@ npm run build
 npm run build:tauri
 ```
 
+## Workspace interface
+
+Version 0.3 uses horizontal workspace navigation, a full-width dossier portfolio with card/list views, and a booking studio with a vertical journey navigator and separate review panel. Navigation covers new requests, history, dossiers to relaunch, statistics, Gmail, and help. Profile and database settings are available from the account control. History includes expandable traveller lists, advanced filters, and a keyboard-accessible details panel.
+
+- `src/components/workspace/` owns the workspace layout, hash navigation, and shared empty states.
+- `src/components/ui/` provides the shared controls and profile dialog.
+- Dashboard pages and the booking workflow load separately. Hash routes such as `#/history` survive refresh and support browser back/forward.
+- Record reference data is loaded per centre, so directly opening the history does not depend on first visiting the booking form.
+
+To run the redesigned browser interface with fixtures, use `VITE_MOCK_MODE=true npm run dev:web` (in PowerShell: `$env:VITE_MOCK_MODE='true'; npm run dev:web`). `npm run build` updates the web assets in `dist`; it does **not** update an installed Windows executable. To distribute the redesigned desktop app, run `./scripts/build-windows.ps1` in PowerShell on Windows with the documented prerequisites, then install the newly generated **0.3.0** installer. An on-demand `Windows 0.3 installer` GitHub Actions workflow is also included; it must be pushed and run before an installer artifact exists.
+
 ## Verification used
 
 ```bash

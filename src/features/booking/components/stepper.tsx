@@ -1,64 +1,88 @@
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { Check, LockKeyhole, ArrowUpRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
 interface StepperProps {
   currentStep: number
   completedSteps: number[]
+  onStepChange?: (step: 1 | 2 | 3 | 4) => void
 }
-
-const stepLabels = [
-  { id: 1, title: 'Configuration' },
-  { id: 2, title: 'Voyageurs' },
-  { id: 3, title: 'Services' },
-  { id: 4, title: 'Rendez-vous' },
+const steps = [
+  {
+    title: 'Centre & formule',
+    description: 'Le point de départ',
+    short: 'Configuration',
+  },
+  {
+    title: 'Vos voyageurs',
+    description: 'Identité et projet de voyage',
+    short: 'Voyageurs',
+  },
+  {
+    title: 'Les services',
+    description: 'Un parcours à votre mesure',
+    short: 'Services',
+  },
+  {
+    title: 'Le rendez-vous',
+    description: 'La dernière étape',
+    short: 'Rendez-vous',
+  },
 ]
-
-export function Stepper({ currentStep, completedSteps }: StepperProps) {
+export function Stepper({
+  currentStep,
+  completedSteps,
+  onStepChange,
+}: StepperProps) {
   return (
-    <div className="space-y-2">
-      <div className="flex items-center justify-between">
-        <Badge variant="secondary">Flux Capago guide</Badge>
-        <span className="text-sm text-muted-foreground">
-          Etape {currentStep} sur 4
-        </span>
-      </div>
-      <Progress value={(currentStep / 4) * 100} />
-      <div className="grid gap-2 md:grid-cols-4">
-        {stepLabels.map((step) => {
-          const isActive = step.id === currentStep
-          const isCompleted = completedSteps.includes(step.id)
-
+    <aside className="booking-progress">
+      <p className="booking-progress-label">VOTRE PARCOURS</p>
+      <ol className="booking-stepper" aria-label="Progression de la demande">
+        {steps.map((step, index) => {
+          const id = (index + 1) as 1 | 2 | 3 | 4
+          const active = currentStep === id
+          const completed = completedSteps.includes(id)
           return (
-            <div
-              key={step.id}
+            <li
+              key={id}
+              aria-current={active ? 'step' : undefined}
               className={cn(
-                'flex items-center gap-3 rounded-lg border px-3 py-2 text-left transition-colors',
-                isActive
-                  ? 'border-primary/30 bg-primary/5'
-                  : 'border-border/70 bg-white',
+                'booking-step',
+                active && 'is-current',
+                completed && 'is-complete',
               )}
             >
-              <span
-                className={cn(
-                  'flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-sm font-bold',
-                  isCompleted || isActive
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted text-muted-foreground',
-                )}
+              <button
+                type="button"
+                onClick={() => onStepChange?.(id)}
+                disabled={!onStepChange || (id > currentStep && !completed)}
+                aria-label={`${step.short}${completed ? ', étape validée' : ''}`}
               >
-                {step.id}
-              </span>
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-foreground">{step.title}</p>
-                <p className="text-xs text-muted-foreground">
-                  {isCompleted ? 'Valide' : isActive ? 'En cours' : 'En attente'}
-                </p>
-              </div>
-            </div>
+                <span className="step-number">
+                  {completed && !active ? (
+                    <Check size={16} />
+                  ) : (
+                    String(id).padStart(2, '0')
+                  )}
+                </span>
+                <span>
+                  <strong>{step.title}</strong>
+                  <small>
+                    {active
+                      ? 'En cours'
+                      : completed
+                        ? 'Complété'
+                        : step.description}
+                  </small>
+                </span>
+                {active ? <ArrowUpRight size={16} /> : null}
+              </button>
+            </li>
           )
         })}
+      </ol>
+      <div className="booking-progress-help">
+        <LockKeyhole size={18} />
+        <p>Votre brouillon reste disponible quand vous quittez le parcours.</p>
       </div>
-    </div>
+    </aside>
   )
 }

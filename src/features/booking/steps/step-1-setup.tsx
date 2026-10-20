@@ -1,11 +1,20 @@
-import { Controller, type Control, type FieldErrors, type UseFormSetValue } from 'react-hook-form'
+import {
+  Controller,
+  type Control,
+  type FieldErrors,
+  type UseFormSetValue,
+} from 'react-hook-form'
 import { Check, Crown, FileText, ShieldCheck, Sparkles } from 'lucide-react'
 
 import { Checkbox } from '@/components/ui/checkbox'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Select } from '@/components/ui/select'
-import type { BookingFormValues, CapagoCenter, GlobalParams } from '@/lib/api/types'
+import type {
+  BookingFormValues,
+  CapagoCenter,
+  GlobalParams,
+} from '@/lib/api/types'
 import { openExternalUrl } from '@/lib/persistence/external'
 import { CenterCard } from '@/features/booking/components/center-card'
 import { FormField } from '@/features/booking/components/form-field'
@@ -48,7 +57,8 @@ export function Step1Setup({
         <CardHeader>
           <CardTitle>Choisissez le centre et la formule</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Le centre pilote automatiquement les services et les visas charges.
+            Sélectionnez votre centre de dépôt, puis la formule adaptée à votre
+            demande.
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -59,7 +69,10 @@ export function Step1Setup({
                 center={center}
                 selected={values.area === center.id}
                 onSelect={() => {
-                  setValue('area', center.id, { shouldDirty: true, shouldValidate: true })
+                  setValue('area', center.id, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  })
                 }}
               />
             ))}
@@ -80,7 +93,7 @@ export function Step1Setup({
                 value: 'premium',
                 title: 'Premium',
                 description:
-                  'Met en avant les services inclus selon les parametres distants.',
+                  'Un accompagnement avec les services inclus proposés par votre centre.',
                 icon: Crown,
               },
             ].map((formula) => {
@@ -93,14 +106,19 @@ export function Step1Setup({
                   className={cn(
                     'rounded-xl border px-3 py-3 text-left transition-colors',
                     isSelected
-                      ? 'border-primary/30 bg-primary/5'
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
                       : 'border-border/80 bg-white hover:border-primary/20',
                   )}
+                  aria-pressed={isSelected}
                   onClick={() =>
-                    setValue('formula', formula.value as BookingFormValues['formula'], {
-                      shouldDirty: true,
-                      shouldValidate: true,
-                    })
+                    setValue(
+                      'formula',
+                      formula.value as BookingFormValues['formula'],
+                      {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      },
+                    )
                   }
                 >
                   <div className="mb-3 flex items-center justify-between">
@@ -148,7 +166,9 @@ export function Step1Setup({
                     aria-label="Nombre de voyageurs"
                     value={String(field.value)}
                     options={travellerOptions}
-                    onChange={(event) => field.onChange(Number(event.target.value))}
+                    onChange={(event) =>
+                      field.onChange(Number(event.target.value))
+                    }
                   />
                 )}
               />
@@ -157,13 +177,12 @@ export function Step1Setup({
               <div className="mb-2 flex items-center gap-2 text-muted-foreground">
                 <Sparkles className="h-4 w-4" />
                 <span className="text-xs uppercase tracking-[0.18em]">
-                  Rappel produit
+                  Bon à savoir
                 </span>
               </div>
               <p className="text-sm text-muted-foreground">
-                La formule premium suit les options incluses annoncees par les
-                parametres globaux. Le centre reste selectionnable a tout moment
-                et recharge les dependances en direct.
+                Les services inclus varient selon le centre et la formule. Vous
+                pourrez compléter vos options à l’étape Services.
               </p>
             </div>
           </div>
@@ -192,7 +211,9 @@ export function Step1Setup({
               <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-slate-50 px-3 py-3">
                 <Checkbox
                   checked={field.value}
-                  onCheckedChange={(checked) => field.onChange(Boolean(checked))}
+                  onCheckedChange={(checked) =>
+                    field.onChange(Boolean(checked))
+                  }
                   id="cgv"
                 />
                 <div className="space-y-1">
@@ -200,8 +221,8 @@ export function Step1Setup({
                     J&apos;accepte les conditions generales
                   </Label>
                   <p className="text-sm text-muted-foreground">
-                    Ouvrez le document officiel si vous souhaitez le relire avant
-                    de continuer.
+                    Ouvrez le document officiel si vous souhaitez le relire
+                    avant de continuer.
                   </p>
                   <button
                     type="button"

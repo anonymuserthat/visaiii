@@ -1,7 +1,7 @@
 {
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Damander Visa",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "identifier": "eu.damander.visa",
   "build": {
     "frontendDist": "../dist",
@@ -12,7 +12,7 @@
   "app": {
     "windows": [
       {
-        "title": "Damander Visa",
+        "title": "Damander Visa 0.3.0",
         "width": 1480,
         "height": 980,
         "minWidth": 1200,
@@ -39,9 +39,7 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "resources": [
-      "../.env"
-    ],
+    "resources": [],
     "windows": {
       "digestAlgorithm": "sha256",
       "webviewInstallMode": {

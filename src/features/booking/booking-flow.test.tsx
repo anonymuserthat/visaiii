@@ -377,6 +377,20 @@ describe('BookingShell flow', () => {
     await screen.findByText(/Voyageur 1/i)
   })
 
+  it('lets the user revisit completed steps while protecting future steps', async () => {
+    seedStore(2)
+    const user = userEvent.setup()
+    renderBookingShell()
+    const email = await screen.findByRole('textbox', { name: /^Email$/i })
+    await user.clear(email)
+    await user.type(email, 'updated@example.com')
+    expect(screen.getByRole('button', { name: /^Rendez-vous/ })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: /^Configuration/ }))
+    expect(useBookingStore.getState().currentStep).toBe(1)
+    await user.click(screen.getByRole('button', { name: /continuer/i }))
+    expect(await screen.findByRole('textbox', { name: /^Email$/i })).toHaveValue('updated@example.com')
+  })
+
   it('creates one traveller block per selected voyageur in step 1', async () => {
     seedStore()
     const user = userEvent.setup()
@@ -391,6 +405,22 @@ describe('BookingShell flow', () => {
 
     await screen.findByText(/Voyageur 1/i)
     expect(screen.getByText(/Voyageur 2/i)).toBeInTheDocument()
+  })
+
+  it('guides the user to the first invalid traveller field and describes its error', async () => {
+    seedStore(2)
+    useBookingStore.setState(state => ({ draft: { ...state.draft, travellers: state.draft.travellers.map((traveller, index) => index === 0 ? { ...traveller, lastname: '' } : traveller) } }))
+    const user = userEvent.setup()
+    renderBookingShell()
+    await user.click(await screen.findByRole('button', { name: /continuer/i }))
+    const name = screen.getByRole('textbox', { name: /^Nom$/i })
+    await waitFor(() => expect(name).toHaveFocus())
+    expect(name).toHaveAttribute('aria-invalid', 'true')
+    const errorId = name.getAttribute('aria-describedby')
+    expect(errorId).toBeTruthy()
+    expect(document.getElementById(errorId!)).toHaveAttribute('role', 'alert')
+    expect(screen.getByRole('button', { name: /Aller au premier champ à corriger/i })).toBeInTheDocument()
+    expect(useBookingStore.getState().currentStep).toBe(2)
   })
 
   it('moves from travellers to services when traveller details are already valid', async () => {

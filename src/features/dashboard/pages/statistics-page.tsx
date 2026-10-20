@@ -1,151 +1,171 @@
-import type * as React from 'react'
-import { BarChart3, CalendarRange, Clock3, Database, Layers3 } from 'lucide-react'
-
-import { Badge } from '@/components/ui/badge'
+import {
+  ArrowUpRight,
+  CalendarDays,
+  ChartColumnBig,
+  ClockArrowUp,
+  FolderCheck,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import type { RequestStatisticPoint, RequestStatistics } from '@/lib/api/types'
 
-interface StatisticsPageProps {
-  stats: RequestStatistics
-}
-
-function StatCard(props: {
-  icon: React.ComponentType<{ className?: string }>
-  label: string
-  value: number
-  hint: string
-}) {
-  const Icon = props.icon
-
-  return (
-    <Card>
-      <CardContent className="py-6">
-        <div className="mb-3 flex items-center gap-2 text-muted-foreground">
-          <Icon className="h-4 w-4" />
-          <span className="text-xs uppercase tracking-[0.16em]">{props.label}</span>
-        </div>
-        <p className="font-display text-4xl text-foreground">{props.value}</p>
-        <p className="mt-2 text-sm text-muted-foreground">{props.hint}</p>
-      </CardContent>
-    </Card>
-  )
-}
-
-function BarList(props: {
+function Distribution({
+  title,
+  points,
+}: {
   title: string
   points: RequestStatisticPoint[]
-  emptyLabel: string
 }) {
-  const maxCount = Math.max(...props.points.map((point) => point.count), 1)
-
+  const total = points.reduce((sum, point) => sum + point.count, 0)
   return (
     <Card>
       <CardHeader>
-        <CardTitle>{props.title}</CardTitle>
+        <CardTitle>{title}</CardTitle>
+        <p className="text-[11px] text-muted-foreground">
+          Répartition des dossiers enregistrés
+        </p>
       </CardHeader>
-      <CardContent className="space-y-3">
-        {props.points.length === 0 ? (
-          <p className="text-sm text-muted-foreground">{props.emptyLabel}</p>
-        ) : (
-          props.points.map((point) => (
-            <div key={point.label} className="space-y-2">
-              <div className="flex items-center justify-between text-sm">
-                <span className="font-medium text-foreground">{point.label}</span>
-                <span className="text-muted-foreground">{point.count}</span>
+      <CardContent className="space-y-5">
+        {points.length ? (
+          points.map((point, index) => (
+            <div key={point.label}>
+              <div className="mb-2 flex items-center justify-between gap-4 text-xs">
+                <span className="flex items-center gap-2">
+                  <i
+                    className={`h-2 w-2 rounded-sm ${index % 2 ? 'bg-slate-400' : 'bg-primary'}`}
+                  />
+                  {point.label}
+                </span>
+                <span className="font-semibold tabular-nums">
+                  {point.count}{' '}
+                  <span className="ml-2 font-normal text-muted-foreground">
+                    {total ? Math.round((point.count / total) * 100) : 0}%
+                  </span>
+                </span>
               </div>
-              <div className="h-2 rounded-full bg-slate-200/80">
+              <div className="h-1.5 overflow-hidden rounded-full bg-slate-100">
                 <div
-                  className="h-2 rounded-full bg-primary/80 transition-all"
-                  style={{ width: `${(point.count / maxCount) * 100}%` }}
+                  className={`h-full rounded-full ${index % 2 ? 'bg-slate-400' : 'bg-primary'}`}
+                  style={{
+                    width: `${total ? (point.count / total) * 100 : 0}%`,
+                  }}
                 />
               </div>
             </div>
           ))
+        ) : (
+          <p className="py-8 text-center text-xs text-muted-foreground">
+            Aucune donnée pour le moment.
+          </p>
         )}
       </CardContent>
     </Card>
   )
 }
 
-export function StatisticsPage({ stats }: StatisticsPageProps) {
+export function StatisticsPage({ stats }: { stats: RequestStatistics }) {
+  const maximum = Math.max(...stats.monthlyTrend.map((point) => point.count), 1)
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          icon={Clock3}
-          label="Aujourd'hui"
-          value={stats.todayCount}
-          hint="Demandes enregistrees sur la journee courante."
-        />
-        <StatCard
-          icon={CalendarRange}
-          label="Ce mois"
-          value={stats.monthCount}
-          hint="Soumissions conservees depuis le debut du mois."
-        />
-        <StatCard
-          icon={BarChart3}
-          label="Cette annee"
-          value={stats.yearCount}
-          hint="Vision rapide du volume annuel."
-        />
-        <StatCard
-          icon={Database}
-          label="Expirees"
-          value={stats.expiredCount}
-          hint="Demandes vieilles de 30 jours ou plus."
-        />
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {[
+          {
+            label: 'Aujourd’hui',
+            count: stats.todayCount,
+            hint: 'Soumissions du jour',
+            icon: CalendarDays,
+          },
+          {
+            label: 'Ce mois-ci',
+            count: stats.monthCount,
+            hint: 'Depuis le début du mois',
+            icon: ChartColumnBig,
+          },
+          {
+            label: 'Cette année',
+            count: stats.yearCount,
+            hint: 'Soumissions annuelles',
+            icon: FolderCheck,
+          },
+          {
+            label: 'À relancer',
+            count: stats.expiredCount,
+            hint: 'Plus de 30 jours',
+            icon: ClockArrowUp,
+          },
+        ].map((item) => (
+          <Card key={item.label}>
+            <CardContent className="pt-5">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{item.label}</span>
+                <item.icon size={17} className="text-primary" />
+              </div>
+              <p className="mt-5 text-3xl font-semibold tracking-tight tabular-nums">
+                {item.count}
+              </p>
+              <p className="mt-2 text-[10px] text-muted-foreground">
+                {item.hint}
+              </p>
+            </CardContent>
+          </Card>
+        ))}
       </div>
-
       <Card>
-        <CardContent className="flex flex-wrap items-center gap-3 py-4">
-          <Badge>Total {stats.totalCount}</Badge>
-          <Badge variant="secondary">
-            Rappels a traiter {stats.pendingReminderCount}
-          </Badge>
-          <Badge variant="outline">Tendance sur 6 mois</Badge>
+        <CardHeader className="flex-row items-start justify-between gap-4">
+          <div>
+            <CardTitle>Évolution des soumissions</CardTitle>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Votre activité sur les six derniers mois
+            </p>
+          </div>
+          <span className="rounded-md border bg-slate-50 px-3 py-1.5 text-[10px] text-muted-foreground">
+            6 derniers mois
+          </span>
+        </CardHeader>
+        <CardContent>
+          <div
+            className="monthly-chart"
+            role="img"
+            aria-label={`Soumissions mensuelles : ${stats.monthlyTrend.map((point) => `${point.label} : ${point.count}`).join(', ')}`}
+          >
+            {stats.monthlyTrend.map((point) => (
+              <div key={point.label} className="monthly-chart-column">
+                <span className="monthly-chart-value">{point.count}</span>
+                <div className="monthly-chart-track">
+                  <div
+                    className="monthly-chart-bar"
+                    style={{ height: `${(point.count / maximum) * 100}%` }}
+                  />
+                </div>
+                <span className="monthly-chart-label">{point.label}</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t pt-4 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-2">
+              <i className="h-2 w-2 rounded-sm bg-primary" />
+              Demandes soumises
+            </span>
+            <span>
+              {stats.totalCount} dossier{stats.totalCount > 1 ? 's' : ''} au
+              total
+            </span>
+          </div>
         </CardContent>
       </Card>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
-        <BarList
-          title="Activite sur les 6 derniers mois"
-          points={stats.monthlyTrend}
-          emptyLabel="Aucune activite a afficher pour le moment."
-        />
-        <BarList
-          title="Repartition par formule"
-          points={stats.byFormula}
-          emptyLabel="Les formules apparaitront ici apres les premieres soumissions."
-        />
+      <div className="grid items-start gap-6 lg:grid-cols-2">
+        <Distribution title="Par centre de dépôt" points={stats.byCenter} />
+        <Distribution title="Par formule" points={stats.byFormula} />
       </div>
-
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <BarList
-          title="Repartition par centre"
-          points={stats.byCenter}
-          emptyLabel="Les centres actifs apparaitront ici."
-        />
-        <Card>
-          <CardHeader>
-            <CardTitle>Lecture rapide</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2 text-foreground">
-              <Layers3 className="h-4 w-4" />
-              Les compteurs resumment automatiquement l&apos;historique
-              disponible pour vous donner une vue rapide de l&apos;activite.
-            </div>
-            <p>
-              La page Expirees vous aide a relancer les dossiers anciens sans
-              retaper les informations candidats.
-            </p>
-            <p>
-              Chaque demande enregistree peut ensuite etre retrouvee depuis
-              l&apos;historique pour un suivi plus simple.
-            </p>
-          </CardContent>
-        </Card>
+      <div className="flex items-center gap-3 rounded-xl border border-primary/15 bg-primary/5 p-5 text-xs leading-6 text-primary">
+        <ArrowUpRight size={20} className="shrink-0" />
+        <p>
+          <strong>
+            {stats.pendingReminderCount} rappel
+            {stats.pendingReminderCount > 1 ? 's' : ''} à traiter.
+          </strong>{' '}
+          Retrouvez les dossiers concernés dans « À relancer » pour reprendre
+          leur préparation.
+        </p>
       </div>
     </div>
   )

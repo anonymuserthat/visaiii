@@ -6,11 +6,11 @@ import {
   CalendarClock,
   ExternalLink,
   Info,
-  Mail,
-  Phone,
   RefreshCcw,
   Search,
-  UserRound,
+  SlidersHorizontal,
+  LayoutGrid,
+  List,
 } from 'lucide-react'
 
 import { Badge } from '@/components/ui/badge'
@@ -45,6 +45,7 @@ interface RequestRecordListProps {
   defaultSubmitterFilter?: string
   socialTitles?: SocialTitle[]
   visaFileVariations?: VisaFileVariation[]
+  visaTypesByCenter?: Record<string, VisaTypeItem[]>
   visaTypes?: VisaTypeItem[]
   onReuseRecord: (record: StoredRequestRecord, mode: ReuseMode) => void
   onOpenConfirmation?: (record: StoredRequestRecord) => void
@@ -86,7 +87,9 @@ function getRequestTravellerSummaries(record: StoredRequestRecord) {
       label: `Voyageur ${index + 1}`,
       name:
         fullName ||
-        (index === 0 ? getRequestPrimaryLabel(record) : `Voyageur ${index + 1}`),
+        (index === 0
+          ? getRequestPrimaryLabel(record)
+          : `Voyageur ${index + 1}`),
       email: traveller.email,
       phone: traveller.phone,
     }
@@ -146,6 +149,7 @@ export function RequestRecordList({
   socialTitles = [],
   visaFileVariations = [],
   visaTypes = [],
+  visaTypesByCenter = {},
   onReuseRecord,
   onOpenConfirmation,
   onDismissReminder,
@@ -153,6 +157,8 @@ export function RequestRecordList({
   const normalizedDefaultSubmitterFilter = normalizeSubmitterEmail(
     defaultSubmitterFilter,
   )
+  const [view, setView] = useState<'grid' | 'list'>('grid')
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState(false)
   const [search, setSearch] = useState('')
   const [centerFilter, setCenterFilter] = useState('')
   const [formulaFilter, setFormulaFilter] = useState('')
@@ -165,7 +171,8 @@ export function RequestRecordList({
   const [submittedTo, setSubmittedTo] = useState('')
   const [pageSize, setPageSize] = useState('10')
   const [page, setPage] = useState(1)
-  const [detailsRecord, setDetailsRecord] = useState<StoredRequestRecord | null>(null)
+  const [detailsRecord, setDetailsRecord] =
+    useState<StoredRequestRecord | null>(null)
   const submitterFilter =
     submitterFilterState.defaultValue === normalizedDefaultSubmitterFilter
       ? submitterFilterState.value
@@ -265,370 +272,477 @@ export function RequestRecordList({
   )
 
   const currentPageSize = Number.parseInt(pageSize, 10) || 10
-  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / currentPageSize))
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredRecords.length / currentPageSize),
+  )
   const currentPage = Math.min(page, totalPages)
   const pagedRecords = filteredRecords.slice(
     (currentPage - 1) * currentPageSize,
     currentPage * currentPageSize,
   )
-  const rangeStart = filteredRecords.length === 0 ? 0 : (currentPage - 1) * currentPageSize + 1
-  const rangeEnd = Math.min(filteredRecords.length, currentPage * currentPageSize)
+  const rangeStart =
+    filteredRecords.length === 0 ? 0 : (currentPage - 1) * currentPageSize + 1
+  const rangeEnd = Math.min(
+    filteredRecords.length,
+    currentPage * currentPageSize,
+  )
 
   const hasActiveFilters = Boolean(
     search.trim() ||
-      centerFilter ||
-      formulaFilter ||
-      statusFilter ||
-      submitterFilter ||
-      submittedFrom ||
-      submittedTo,
+    centerFilter ||
+    formulaFilter ||
+    statusFilter ||
+    submitterFilter ||
+    submittedFrom ||
+    submittedTo,
   )
 
   return (
     <>
-      <Card className="overflow-hidden">
-      <CardContent className="space-y-3 px-3 pb-3 pt-3">
-        <div className="flex flex-col gap-3">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-            <Input
-              aria-label="Recherche dans les demandes"
-              className="pl-9"
-              placeholder="Rechercher voyageur, utilisateur, email, telephone, centre..."
-              value={search}
-              onChange={(event) => {
-                setSearch(event.target.value)
-                setPage(1)
-              }}
-            />
-          </div>
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
-            <Select
-              aria-label="Filtrer par centre"
-              value={centerFilter}
-              placeholder="Tous les centres"
-              options={centerOptions}
-              onChange={(event) => {
-                setCenterFilter(event.target.value)
-                setPage(1)
-              }}
-            />
-            <Select
-              aria-label="Filtrer par formule"
-              value={formulaFilter}
-              placeholder="Toutes les formules"
-              options={[
-                { value: 'standard', label: 'Standard' },
-                { value: 'premium', label: 'Premium' },
-              ]}
-              onChange={(event) => {
-                setFormulaFilter(event.target.value)
-                setPage(1)
-              }}
-            />
-            <Select
-              aria-label="Filtrer par statut"
-              value={statusFilter}
-              placeholder={scope === 'expired' ? 'Toutes les lignes' : 'Tous les statuts'}
-              options={[
-                { value: 'expired', label: 'Expirees' },
-                { value: 'recent', label: 'Recentes' },
-              ]}
-              onChange={(event) => {
-                setStatusFilter(event.target.value)
-                setPage(1)
-              }}
-            />
-            <Select
-              aria-label="Filtrer par utilisateur"
-              value={submitterFilter}
-              placeholder="Tous les utilisateurs"
-              options={submitterOptions}
-              onChange={(event) => {
-                updateSubmitterFilter(event.target.value)
-                setPage(1)
-              }}
-            />
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Soumis a partir du</p>
-              <Input
-                aria-label="Date de soumission a partir de"
-                type="date"
-                value={submittedFrom}
-                onChange={(event) => {
-                  setSubmittedFrom(event.target.value)
-                  setPage(1)
-                }}
-              />
+      <Card
+        className={`records-workspace records-view-${view} rounded-none border-0 bg-transparent shadow-none`}
+      >
+        <CardContent className="p-0">
+          <div className="records-toolbar">
+            <div className="records-workspace-heading">
+              <div>
+                <h2>
+                  {scope === 'expired'
+                    ? 'Dossiers à reprendre'
+                    : 'Tous les dossiers'}
+                </h2>
+                <p>Retrouvez un voyageur et reprenez le suivi de sa demande.</p>
+              </div>
+              <div
+                className="records-view-switch"
+                aria-label="Présentation des dossiers"
+              >
+                <button
+                  type="button"
+                  aria-label="Afficher en cartes"
+                  aria-pressed={view === 'grid'}
+                  onClick={() => setView('grid')}
+                >
+                  <LayoutGrid size={17} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Afficher en liste"
+                  aria-pressed={view === 'list'}
+                  onClick={() => setView('list')}
+                >
+                  <List size={18} />
+                </button>
+              </div>
             </div>
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Soumis jusqu'au</p>
-              <Input
-                aria-label="Date de soumission jusqu'a"
-                type="date"
-                value={submittedTo}
-                min={submittedFrom || undefined}
-                onChange={(event) => {
-                  setSubmittedTo(event.target.value)
-                  setPage(1)
-                }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-2 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <span>
-              {filteredRecords.length} resultat{filteredRecords.length > 1 ? 's' : ''}
-            </span>
-            {filteredRecords.length > 0 ? (
-              <span>
-                Affichage {rangeStart}-{rangeEnd}
+            <div className="records-toolbar-top">
+              <div className="relative flex-1">
+                <Search className="pointer-events-none absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  aria-label="Recherche dans les demandes"
+                  className="pl-9"
+                  placeholder="Rechercher un nom, un email, un centre…"
+                  value={search}
+                  onChange={(event) => {
+                    setSearch(event.target.value)
+                    setPage(1)
+                  }}
+                />
+              </div>
+              <span className="hidden whitespace-nowrap text-xs font-medium text-muted-foreground sm:block">
+                {records.length} dossiers enregistrés
               </span>
-            ) : null}
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              aria-label="Nombre de lignes par page"
-              className="min-w-[120px]"
-              value={pageSize}
-              options={[
-                { value: '10', label: '10 / page' },
-                { value: '25', label: '25 / page' },
-                { value: '50', label: '50 / page' },
-              ]}
-              onChange={(event) => {
-                setPageSize(event.target.value)
-                setPage(1)
-              }}
-            />
-            {hasActiveFilters ? (
+            </div>
+            <div className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <Select
+                aria-label="Filtrer par centre"
+                value={centerFilter}
+                placeholder="Tous les centres"
+                options={centerOptions}
+                onChange={(event) => {
+                  setCenterFilter(event.target.value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                aria-label="Filtrer par formule"
+                value={formulaFilter}
+                placeholder="Toutes les formules"
+                options={[
+                  { value: 'standard', label: 'Standard' },
+                  { value: 'premium', label: 'Premium' },
+                ]}
+                onChange={(event) => {
+                  setFormulaFilter(event.target.value)
+                  setPage(1)
+                }}
+              />
+              <Select
+                aria-label="Filtrer par statut"
+                value={statusFilter}
+                placeholder={
+                  scope === 'expired' ? 'Toutes les lignes' : 'Tous les statuts'
+                }
+                options={[
+                  { value: 'expired', label: 'Expirees' },
+                  { value: 'recent', label: 'Recentes' },
+                ]}
+                onChange={(event) => {
+                  setStatusFilter(event.target.value)
+                  setPage(1)
+                }}
+              />
               <Button
                 type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearch('')
-                  setCenterFilter('')
-                  setFormulaFilter('')
-                  setStatusFilter('')
-                  updateSubmitterFilter('')
-                  setSubmittedFrom('')
-                  setSubmittedTo('')
+                variant="secondary"
+                className="h-10"
+                aria-expanded={showAdvancedFilters}
+                aria-controls="advanced-request-filters"
+                onClick={() => setShowAdvancedFilters((value) => !value)}
+              >
+                <SlidersHorizontal size={14} />
+                Filtres avancés
+                {submitterFilter || submittedFrom || submittedTo ? (
+                  <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                ) : null}
+              </Button>
+            </div>
+            <div
+              id="advanced-request-filters"
+              hidden={!showAdvancedFilters}
+              className="mt-4 border-t pt-4"
+            >
+              <div className="grid items-end gap-3 sm:grid-cols-3">
+                <Select
+                  aria-label="Filtrer par utilisateur"
+                  value={submitterFilter}
+                  placeholder="Tous les utilisateurs"
+                  options={submitterOptions}
+                  onChange={(event) => {
+                    updateSubmitterFilter(event.target.value)
+                    setPage(1)
+                  }}
+                />
+                <div className="space-y-1 ">
+                  <p className="text-[10px] text-muted-foreground">
+                    Soumis a partir du
+                  </p>
+                  <Input
+                    aria-label="Date de soumission a partir de"
+                    type="date"
+                    value={submittedFrom}
+                    onChange={(event) => {
+                      setSubmittedFrom(event.target.value)
+                      setPage(1)
+                    }}
+                  />
+                </div>
+                <div className="space-y-1 ">
+                  <p className="text-[10px] text-muted-foreground">
+                    Soumis jusqu'au
+                  </p>
+                  <Input
+                    aria-label="Date de soumission jusqu'a"
+                    type="date"
+                    value={submittedTo}
+                    min={submittedFrom || undefined}
+                    onChange={(event) => {
+                      setSubmittedTo(event.target.value)
+                      setPage(1)
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 px-5 py-3 text-[11px] text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {submitterFilter ? (
+                <Badge variant="secondary">
+                  Utilisateur :{' '}
+                  {submitterOptions.find(
+                    (option) => option.value === submitterFilter,
+                  )?.label || submitterFilter}
+                </Badge>
+              ) : null}
+              <span>
+                {filteredRecords.length} resultat
+                {filteredRecords.length > 1 ? 's' : ''}
+              </span>
+              {filteredRecords.length > 0 ? (
+                <span>
+                  Affichage {rangeStart}-{rangeEnd}
+                </span>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <Select
+                aria-label="Nombre de lignes par page"
+                className="min-w-[120px]"
+                value={pageSize}
+                options={[
+                  { value: '10', label: '10 / page' },
+                  { value: '25', label: '25 / page' },
+                  { value: '50', label: '50 / page' },
+                ]}
+                onChange={(event) => {
+                  setPageSize(event.target.value)
                   setPage(1)
                 }}
-              >
-                Reinitialiser les filtres
-              </Button>
-            ) : null}
-          </div>
-        </div>
-
-        <div className="hidden items-center gap-3 border-y border-border/60 bg-slate-50 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground lg:grid lg:grid-cols-[minmax(0,1.35fr)_150px_190px_180px_280px]">
-          <span>Demandeur</span>
-          <span>Centre</span>
-          <span>Rendez-vous</span>
-          <span>Soumission</span>
-          <span>Actions</span>
-        </div>
-
-        {filteredRecords.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border px-4 py-8 text-sm text-muted-foreground">
-            Aucune demande ne correspond a la recherche ou aux filtres actifs.
-          </div>
-        ) : (
-          <div className="divide-y divide-border/70">
-            {pagedRecords.map((record) => {
-              const expired = isRequestExpired(record)
-              const travellerSummaries = getRequestTravellerSummaries(record)
-              const reuseMode: ReuseMode =
-                scope === 'expired'
-                  ? expired
-                    ? 'expired'
-                    : 'test'
-                  : 'history'
-
-              return (
-                <div
-                  key={record.id}
-                  className="grid gap-3 px-1 py-3 lg:grid-cols-[minmax(0,1.35fr)_150px_190px_180px_280px] lg:px-2"
+              />
+              {hasActiveFilters ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSearch('')
+                    setCenterFilter('')
+                    setFormulaFilter('')
+                    setStatusFilter('')
+                    updateSubmitterFilter('')
+                    setSubmittedFrom('')
+                    setSubmittedTo('')
+                    setPage(1)
+                  }}
                 >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <p className="truncate text-base font-semibold text-foreground">
-                        {getRequestPrimaryLabel(record)}
-                      </p>
-                      <Badge variant="secondary">{getFormulaLabel(record)}</Badge>
-                      {expired ? <Badge variant="outline">Expiree</Badge> : null}
-                      {scope === 'expired' && !expired ? (
-                        <Badge variant="outline">Mode test</Badge>
-                      ) : null}
-                    </div>
-                    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-muted-foreground">
-                      <span className="inline-flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        {record.primaryTravellerEmail || 'Email non renseigne'}
+                  Reinitialiser les filtres
+                </Button>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="record-columns" aria-hidden="true">
+            <span>Demandeur</span>
+            <span>Centre & rendez-vous</span>
+            <span>Soumission</span>
+            <span className="text-right">Actions</span>
+          </div>
+
+          {filteredRecords.length === 0 ? (
+            <div className="record-empty">
+              Aucune demande ne correspond a la recherche ou aux filtres actifs.
+            </div>
+          ) : (
+            <div className="records-collection">
+              {pagedRecords.map((record) => {
+                const expired = isRequestExpired(record)
+                const travellerSummaries = getRequestTravellerSummaries(record)
+                const reuseMode: ReuseMode =
+                  scope === 'expired'
+                    ? expired
+                      ? 'expired'
+                      : 'test'
+                    : 'history'
+
+                return (
+                  <article
+                    key={record.id}
+                    className="record-row"
+                    aria-label={`Dossier ${getRequestPrimaryLabel(record)}`}
+                  >
+                    <div className="record-primary">
+                      <span className="record-avatar" aria-hidden="true">
+                        {getRequestPrimaryLabel(record)
+                          .split(' ')
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map((part) => part[0])
+                          .join('')
+                          .toUpperCase()}
                       </span>
-                      <span className="inline-flex items-center gap-2">
-                        <Phone className="h-4 w-4" />
-                        {record.primaryTravellerPhone || 'Telephone non renseigne'}
-                      </span>
-                      <span className="inline-flex items-center gap-2">
-                        <UserRound className="h-4 w-4" />
-                        {getRequestSubmitterLabel(record)}
-                      </span>
-                    </div>
-                    {travellerSummaries.length > 1 ? (
-                      <div className="mt-3 rounded-xl border border-border/60 bg-slate-50/80 px-3 py-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                          Tous les voyageurs
+                      <div className="min-w-0 flex-1">
+                        <p className="record-name">
+                          {getRequestPrimaryLabel(record)}
                         </p>
-                        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                          {travellerSummaries.map((traveller) => (
-                            <div
-                              key={traveller.key}
-                              className="rounded-lg bg-white/90 px-3 py-2 text-sm"
-                            >
-                              <p className="font-medium text-foreground">
-                                {traveller.label}: {traveller.name}
-                              </p>
-                              <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                                {traveller.email ? (
-                                  <span className="inline-flex items-center gap-1.5">
-                                    <Mail className="h-3.5 w-3.5" />
-                                    {traveller.email}
-                                  </span>
-                                ) : null}
-                                {traveller.phone ? (
-                                  <span className="inline-flex items-center gap-1.5">
-                                    <Phone className="h-3.5 w-3.5" />
-                                    {traveller.phone}
-                                  </span>
-                                ) : null}
-                              </div>
-                            </div>
-                          ))}
+                        <div className="record-meta">
+                          <p>
+                            {record.primaryTravellerEmail ||
+                              'Email non renseigné'}
+                          </p>
+                          <p>
+                            {record.primaryTravellerPhone ||
+                              'Téléphone non renseigné'}
+                          </p>
                         </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <Badge variant="secondary">
+                            {getFormulaLabel(record)}
+                          </Badge>
+                          <span
+                            className={`record-status ${expired ? 'is-expired' : ''}`}
+                          >
+                            {expired ? 'À relancer' : 'Récente'}
+                          </span>
+                          {scope === 'expired' && !expired ? (
+                            <Badge variant="outline">Mode test</Badge>
+                          ) : null}
+                        </div>
+                        {travellerSummaries.length > 1 ? (
+                          <details
+                            className="record-travellers"
+                            open={
+                              normalizedSearch
+                                ? travellerSummaries.some((traveller) =>
+                                    [
+                                      traveller.name,
+                                      traveller.email,
+                                      traveller.phone,
+                                    ].some((value) =>
+                                      value
+                                        ?.toLowerCase()
+                                        .includes(normalizedSearch),
+                                    ),
+                                  )
+                                : undefined
+                            }
+                          >
+                            <summary>
+                              Tous les voyageurs · {travellerSummaries.length}
+                            </summary>
+                            <div className="space-y-2">
+                              {travellerSummaries.map((traveller) => (
+                                <div
+                                  key={traveller.key}
+                                  className="rounded-md bg-slate-50 p-2"
+                                >
+                                  <p className="font-medium">
+                                    {traveller.label}: {traveller.name}
+                                  </p>
+                                  <p className="record-meta">
+                                    {traveller.email}
+                                    {traveller.email && traveller.phone
+                                      ? ' · '
+                                      : ''}
+                                    {traveller.phone}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </details>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-
-                  <div className="text-sm">
-                    <p className="font-medium text-foreground">{record.centerLabel}</p>
-                    <p className="mt-1 text-muted-foreground">
-                      {record.travellerCount} voyageur
-                      {record.travellerCount > 1 ? 's' : ''}
-                    </p>
-                  </div>
-
-                  <div className="text-sm">
-                    <p className="inline-flex items-center gap-2 font-medium text-foreground">
-                      <CalendarClock className="h-4 w-4 text-muted-foreground" />
-                      {formatRequestAppointmentSummary(record)}
-                    </p>
-                  </div>
-
-                  <div className="space-y-1 text-sm">
-                    <p className="font-medium text-foreground">
-                      {formatRequestSubmittedAt(record)}
-                    </p>
-                    <p className="text-muted-foreground">
-                      {formatRequestAgeLabel(record)}
-                    </p>
-                    <p className="text-muted-foreground">
-                      Creee par {getRequestSubmitterLabel(record)}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-wrap gap-2 lg:justify-end">
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={() => onReuseRecord(record, reuseMode)}
-                    >
-                      <RefreshCcw className="mr-2 h-4 w-4" />
-                      {reuseMode === 'test'
-                        ? 'Tester'
-                        : scope === 'expired'
-                          ? 'Relancer'
-                          : 'Recharger'}
-                    </Button>
-                    {record.confirmationLocation && onOpenConfirmation ? (
+                    </div>
+                    <div className="record-appointment">
+                      <p className="record-field-label">CENTRE & RENDEZ-VOUS</p>
+                      <p className="record-cell-title">{record.centerLabel}</p>
+                      <p className="record-meta">
+                        {record.travellerCount} voyageur
+                        {record.travellerCount > 1 ? 's' : ''}
+                      </p>
+                      <div className="record-meta flex items-start gap-1.5">
+                        <CalendarClock size={13} className="mt-1 shrink-0" />
+                        <span>{formatRequestAppointmentSummary(record)}</span>
+                      </div>
+                    </div>
+                    <div className="record-submitted">
+                      <p className="record-field-label">SOUMISSION</p>
+                      <p className="record-cell-title">
+                        {formatRequestSubmittedAt(record)}
+                      </p>
+                      <p className="record-meta">
+                        {formatRequestAgeLabel(record)}
+                      </p>
+                      <p className="record-meta">
+                        Par {getRequestSubmitterLabel(record)}
+                      </p>
+                    </div>
+                    <div className="record-actions">
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => onReuseRecord(record, reuseMode)}
+                      >
+                        <RefreshCcw size={12} />
+                        {reuseMode === 'test'
+                          ? 'Tester'
+                          : scope === 'expired'
+                            ? 'Relancer'
+                            : 'Recharger'}
+                      </Button>
                       <Button
                         type="button"
                         variant="secondary"
                         size="sm"
-                        onClick={() => onOpenConfirmation(record)}
+                        onClick={() => setDetailsRecord(record)}
                       >
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Confirmation
+                        <Info size={12} />
+                        Details
                       </Button>
-                    ) : null}
-                    <Button
-                      type="button"
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => setDetailsRecord(record)}
-                    >
-                      <Info className="mr-2 h-4 w-4" />
-                      Details
-                    </Button>
-                    {expired && !record.dismissedReminderAt && onDismissReminder ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => onDismissReminder(record)}
-                      >
-                        <BellOff className="mr-2 h-4 w-4" />
-                        Masquer
-                      </Button>
-                    ) : null}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-
-        {filteredRecords.length > currentPageSize ? (
-          <div className="flex flex-col gap-2 border-t border-border/60 pt-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <span>
-              Page {currentPage} sur {totalPages}
-            </span>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={currentPage <= 1}
-                onClick={() => setPage(Math.max(1, currentPage - 1))}
-              >
-                <ChevronLeft className="mr-1 h-4 w-4" />
-                Precedent
-              </Button>
-              <Button
-                type="button"
-                variant="secondary"
-                size="sm"
-                disabled={currentPage >= totalPages}
-                onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
-              >
-                Suivant
-                <ChevronRight className="ml-1 h-4 w-4" />
-              </Button>
+                      {record.confirmationLocation && onOpenConfirmation ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onOpenConfirmation(record)}
+                        >
+                          <ExternalLink size={12} />
+                          Confirmation
+                        </Button>
+                      ) : null}
+                      {expired &&
+                      !record.dismissedReminderAt &&
+                      onDismissReminder ? (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => onDismissReminder(record)}
+                        >
+                          <BellOff size={12} />
+                          Masquer
+                        </Button>
+                      ) : null}
+                    </div>
+                  </article>
+                )
+              })}
             </div>
-          </div>
-        ) : null}
-      </CardContent>
+          )}
+
+          {filteredRecords.length > currentPageSize ? (
+            <div className="flex flex-col gap-2 border-t border-border px-5 py-4 text-xs text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+              <span>
+                Page {currentPage} sur {totalPages}
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage(Math.max(1, currentPage - 1))}
+                >
+                  <ChevronLeft className="mr-1 h-4 w-4" />
+                  Precedent
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage(Math.min(totalPages, currentPage + 1))}
+                >
+                  Suivant
+                  <ChevronRight className="ml-1 h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ) : null}
+        </CardContent>
       </Card>
       <RequestRecordDetailsDialog
         record={detailsRecord}
         open={Boolean(detailsRecord)}
         socialTitles={socialTitles}
         visaFileVariations={visaFileVariations}
-        visaTypes={visaTypes}
+        visaTypes={
+          detailsRecord
+            ? (visaTypesByCenter[detailsRecord.centerId] ?? visaTypes)
+            : visaTypes
+        }
         onOpenChange={(open) => {
           if (!open) {
             setDetailsRecord(null)
