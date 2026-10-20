@@ -104,7 +104,7 @@ function getFormulaLabel(record: StoredRequestRecord) {
     return 'Standard'
   }
 
-  return 'Non definie'
+  return 'Non définie'
 }
 
 function matchesSearch(record: StoredRequestRecord, query: string) {
@@ -518,12 +518,12 @@ export function RequestRecordList({
                         <span className="inline-flex items-center gap-2">
                           <Mail className="h-4 w-4" />
                           {record.primaryTravellerEmail ||
-                            'Email non renseigne'}
+                            'Email non renseigné'}
                         </span>
                         <span className="inline-flex items-center gap-2">
                           <Phone className="h-4 w-4" />
                           {record.primaryTravellerPhone ||
-                            'Téléphone non renseigne'}
+                            'Téléphone non renseigné'}
                         </span>
                         <span className="inline-flex items-center gap-2">
                           <UserRound className="h-4 w-4" />

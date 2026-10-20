@@ -7,7 +7,9 @@ import {
   ClipboardList,
   ClockArrowUp,
   LifeBuoy,
+  LoaderCircle,
   Mail,
+  CloudOff,
   PlusSquare,
   UserRound,
 } from 'lucide-react'
@@ -16,7 +18,7 @@ import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/ui/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { CurrentUserDialog } from '@/features/dashboard/components/current-user-dialog'
 import { BookingShell } from '@/features/booking/booking-shell'
 import { HomePage } from '@/features/dashboard/pages/home-page'
 import { ContactPage } from '@/features/dashboard/pages/contact-page'
@@ -33,8 +35,6 @@ import {
   getRequestPrimaryLabel,
   getRequestStatistics,
   isRequestExpired,
-  normalizeSubmitterEmail,
-  normalizeSubmitterName,
   prepareRequestForResubmission,
 } from '@/lib/request-records'
 import { useBookingStore } from '@/lib/state/store'
@@ -58,7 +58,9 @@ function App() {
   const hydrateDraft = useBookingStore((state) => state.hydrateDraft)
   const resetDraft = useBookingStore((state) => state.resetDraft)
   const setCurrentStep = useBookingStore((state) => state.setCurrentStep)
-  const markStepCompleted = useBookingStore((state) => state.markStepCompleted)
+  const markStepCompleted = useBookingStore(
+    (state) => state.markStepCompleted,
+  )
   const clearSubmission = useBookingStore((state) => state.clearSubmission)
   const setSelectedCenterId = useBookingStore(
     (state) => state.setSelectedCenterId,
@@ -70,6 +72,8 @@ function App() {
   const visaTypes = useBookingStore((state) => state.visaTypes)
   const requestRecordsQuery = useRequestRecordsQuery()
   const requestRecords = requestRecordsQuery.data ?? []
+  const recordsReady =
+    !requestRecordsQuery.isLoading && !requestRecordsQuery.isError
   const expiredRecords = requestRecords.filter((record) =>
     isRequestExpired(record),
   )
@@ -83,7 +87,7 @@ function App() {
   const [currentUserDraft, setCurrentUserDraft] =
     useState<CurrentUserProfile>(EMPTY_CURRENT_USER)
   const [currentUserLoaded, setCurrentUserLoaded] = useState(false)
-  const [isEditingCurrentUser, setIsEditingCurrentUser] = useState(false)
+  const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [isClosePromptOpen, setIsClosePromptOpen] = useState(false)
   const confirmedCloseRef = useRef(false)
 
@@ -114,7 +118,7 @@ function App() {
       })
       .catch((error) => {
         console.error(
-          'Impossible de proteger la fermeture de la fenetre',
+          'Impossible de protéger la fermeture de la fenêtre',
           error,
         )
       })
@@ -147,7 +151,6 @@ function App() {
 
         setCurrentUser(profile)
         setCurrentUserDraft(profile ?? EMPTY_CURRENT_USER)
-        setIsEditingCurrentUser(!profile)
       })
       .catch((error) => {
         console.error(error)
@@ -179,9 +182,9 @@ function App() {
 
     reminderSignatureRef.current = signature
     toast.warning(
-      `${pendingReminders.length} dossier(s) ont depasse 30 jours.`,
+      `${pendingReminders.length} dossier(s) ont dépassé 30 jours.`,
       {
-        description: `${getRequestPrimaryLabel(pendingReminders[0])} peut etre recharge depuis la page Expirees.`,
+        description: `${getRequestPrimaryLabel(pendingReminders[0])} peut être repris depuis la page Demandes expirées.`,
       },
     )
   }, [pendingReminders])
@@ -211,8 +214,8 @@ function App() {
     setActivePage('new-request')
     toast.success(
       mode === 'test'
-        ? 'Mode test actif. Le dossier a ete recharge comme une re-demande expirée: reprenez directement le rendez-vous et le reCAPTCHA.'
-        : 'Le dossier a ete recharge. Reprenez le rendez-vous et le reCAPTCHA avant la nouvelle soumission.',
+        ? 'Mode test actif. Le dossier a été repris comme une demande expirée : reprenez directement le rendez-vous et le reCAPTCHA.'
+        : 'Le dossier a été repris. Reprenez le rendez-vous et le reCAPTCHA avant la nouvelle soumission.',
     )
   }
 
@@ -221,42 +224,22 @@ function App() {
   ) {
     await bookingClient.dismissRequestReminder(record.id)
     await requestRecordsQuery.refetch()
-    toast.success('Le rappel a ete masque pour ce dossier.')
+    toast.success('Le rappel a été masqué pour ce dossier.')
   }
 
-  async function handleSaveCurrentUser() {
-    const nextName = normalizeSubmitterName(currentUserDraft.name)
-    const nextEmail = normalizeSubmitterEmail(currentUserDraft.email)
+  async function handleSaveCurrentUser(profile: CurrentUserProfile) {
+    await bookingClient.saveCurrentUserProfile(profile)
+    setCurrentUser(profile)
+    setCurrentUserDraft(profile)
+    setIsProfileOpen(false)
+    toast.success('Votre profil a été enregistré.')
+  }
 
-    if (nextName.length < 2) {
-      toast.error("Saisissez le nom de l'utilisateur.")
-      return
-    }
-
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(nextEmail)) {
-      toast.error("Saisissez un email valide pour l'utilisateur.")
-      return
-    }
-
-    const nextProfile = {
-      name: nextName,
-      email: nextEmail,
-    } satisfies CurrentUserProfile
-
-    try {
-      await bookingClient.saveCurrentUserProfile(nextProfile)
-      setCurrentUser(nextProfile)
-      setCurrentUserDraft(nextProfile)
-      setIsEditingCurrentUser(false)
-      toast.success(
-        currentUser
-          ? 'Utilisateur actif mis a jour.'
-          : 'Utilisateur actif enregistré.',
-      )
-    } catch (error) {
-      console.error(error)
-      toast.error("Impossible d'enregistrer l'utilisateur actif.")
-    }
+  function navigate(page: AppPage) {
+    setActivePage(page)
+    setIsProfileOpen(
+      page === 'new-request' && currentUserLoaded && !currentUser,
+    )
   }
 
   const navigationItems = [
@@ -276,7 +259,7 @@ function App() {
     {
       id: 'expired',
       label: 'Demandes expirées',
-      hint: `${expiredRecords.length} a revoir`,
+      hint: `${expiredRecords.length} à revoir`,
       icon: ClockArrowUp,
     },
     {
@@ -331,6 +314,9 @@ function App() {
     },
   }
 
+  const showRecordFeedback =
+    ['history', 'expired', 'statistics'].includes(activePage) && !recordsReady
+
   return (
     <main className="app-shell">
       <a className="skip-link" href="#workspace">
@@ -338,7 +324,10 @@ function App() {
       </a>
       <div className="app-frame">
         <div className="app-layout">
-          <aside className="app-navigation" aria-label="Navigation principale">
+          <aside
+            className="app-navigation"
+            aria-label="Navigation principale"
+          >
             <div className="app-brand">
               <span className="brand-symbol" aria-hidden="true">
                 P
@@ -359,14 +348,7 @@ function App() {
                     <button
                       key={item.id}
                       type="button"
-                      onClick={() => {
-                        setActivePage(item.id)
-                        const profile =
-                          document.querySelector<HTMLDetailsElement>(
-                            '.profile-settings',
-                          )
-                        if (profile) profile.open = false
-                      }}
+                      onClick={() => navigate(item.id)}
                       aria-current={isActive ? 'page' : undefined}
                       className={`nav-item ${isActive ? 'is-active' : ''}`}
                     >
@@ -374,7 +356,11 @@ function App() {
                         <Icon className="h-4 w-4" />
                         <span>
                           <span className="nav-label">{item.label}</span>
-                          {item.id === 'history' || item.id === 'expired' ? (
+                          {recordsReady &&
+                          (item.id === 'history' || item.id === 'expired') &&
+                          (item.id === 'history'
+                            ? requestRecords.length
+                            : expiredRecords.length) > 0 ? (
                             <span className="nav-count">
                               {item.id === 'history'
                                 ? requestRecords.length
@@ -389,116 +375,17 @@ function App() {
               </div>
             </nav>
             <div className="sidebar-bottom">
-              {' '}
-              <details
-                className="profile-settings"
-                onKeyDown={(event) => {
-                  if (event.key === 'Escape') {
-                    event.currentTarget.open = false
-                    event.currentTarget.querySelector('summary')?.focus()
-                  }
-                }}
-                open={
-                  activePage === 'new-request' &&
-                  (!currentUser || isEditingCurrentUser)
-                }
+              <button
+                type="button"
+                className="profile-trigger"
+                onClick={() => setIsProfileOpen(true)}
+                disabled={!currentUserLoaded}
+                aria-haspopup="dialog"
               >
-                <summary>
-                  <UserRound className="h-4 w-4" />
-                  {currentUser ? currentUser.name : 'Votre profil'}
-                  <span>Compte</span>
-                </summary>
-                <Card>
-                  <CardContent className="space-y-3 py-3">
-                    <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-                      <UserRound className="h-4 w-4 text-primary" />
-                      Utilisateur actif
-                    </div>
-
-                    {!currentUserLoaded ? (
-                      <p className="text-sm text-muted-foreground">
-                        Chargement de l&apos;utilisateur...
-                      </p>
-                    ) : currentUser && !isEditingCurrentUser ? (
-                      <>
-                        <div className="rounded-lg bg-slate-50 px-3 py-3 text-sm">
-                          <p className="font-medium text-foreground">
-                            {currentUser.name}
-                          </p>
-                          <p className="mt-1 inline-flex items-center gap-2 text-muted-foreground">
-                            <Mail className="h-4 w-4" />
-                            {currentUser.email}
-                          </p>
-                        </div>
-                        <Button
-                          type="button"
-                          variant="secondary"
-                          size="sm"
-                          onClick={() => {
-                            setCurrentUserDraft(currentUser)
-                            setIsEditingCurrentUser(true)
-                          }}
-                        >
-                          Changer l&apos;utilisateur
-                        </Button>
-                      </>
-                    ) : (
-                      <div className="space-y-3">
-                        <p className="text-sm text-muted-foreground">
-                          {currentUser
-                            ? "Mettez a jour le nom ou l'email de l'utilisateur actif."
-                            : "Renseignez une premiere fois le nom et l'email de l'utilisateur qui travaille sur cette installation."}
-                        </p>
-                        <Input
-                          aria-label="Nom de l'utilisateur actif"
-                          placeholder="Nom complet"
-                          value={currentUserDraft.name}
-                          onChange={(event) =>
-                            setCurrentUserDraft((state) => ({
-                              ...state,
-                              name: event.target.value,
-                            }))
-                          }
-                        />
-                        <Input
-                          aria-label="Email de l'utilisateur actif"
-                          type="email"
-                          placeholder="email@exemple.com"
-                          value={currentUserDraft.email}
-                          onChange={(event) =>
-                            setCurrentUserDraft((state) => ({
-                              ...state,
-                              email: event.target.value,
-                            }))
-                          }
-                        />
-                        <div className="flex flex-wrap gap-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            onClick={() => void handleSaveCurrentUser()}
-                          >
-                            Enregistrer
-                          </Button>
-                          {currentUser ? (
-                            <Button
-                              type="button"
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => {
-                                setCurrentUserDraft(currentUser)
-                                setIsEditingCurrentUser(false)
-                              }}
-                            >
-                              Annuler
-                            </Button>
-                          ) : null}
-                        </div>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </details>
+                <UserRound className="h-4 w-4" aria-hidden="true" />
+                <span>{currentUser?.name ?? 'Votre profil'}</span>
+                <small>Compte</small>
+              </button>
               <div className="navigation-footer">
                 <span className="mode-dot" />
                 {RUNTIME_CONFIG.mockMode
@@ -513,20 +400,15 @@ function App() {
             <div className="workspace-utility">
               <span>
                 Votre espace personnel <span aria-hidden="true">/</span>{' '}
-                {activePage === 'home' ? 'Accueil' : pageCopy[activePage].title}
+                {activePage === 'home'
+                  ? 'Accueil'
+                  : pageCopy[activePage].title}
               </span>
               <button
                 type="button"
-                onClick={() => {
-                  const profile =
-                    document.querySelector<HTMLDetailsElement>(
-                      '.profile-settings',
-                    )
-                  if (profile) {
-                    profile.open = !profile.open
-                    profile.querySelector('summary')?.focus()
-                  }
-                }}
+                onClick={() => setIsProfileOpen(true)}
+                disabled={!currentUserLoaded}
+                aria-haspopup="dialog"
               >
                 <UserRound size={16} aria-hidden="true" />
                 {currentUser?.name ?? 'Mon compte'}
@@ -538,21 +420,66 @@ function App() {
                 <p>{pageCopy[activePage].description}</p>
               </div>
               {activePage === 'home' ? (
-                <Button
-                  type="button"
-                  onClick={() => setActivePage('new-request')}
-                >
+                <Button type="button" onClick={() => navigate('new-request')}>
                   <PlusSquare size={16} className="mr-2" />
                   Nouvelle demande
                 </Button>
               ) : (
                 <span className="workspace-context">
-                  {requestStatistics.totalCount} dossier
-                  {requestStatistics.totalCount > 1 ? 's' : ''} enregistré
-                  {requestStatistics.totalCount > 1 ? 's' : ''}
+                  {!recordsReady ? (
+                    requestRecordsQuery.isError ? (
+                      'Dossiers indisponibles'
+                    ) : (
+                      'Chargement des dossiers…'
+                    )
+                  ) : (
+                    <>
+                      {requestStatistics.totalCount} dossier
+                      {requestStatistics.totalCount > 1 ? 's' : ''} enregistré
+                      {requestStatistics.totalCount > 1 ? 's' : ''}
+                    </>
+                  )}
                 </span>
               )}
             </header>
+            {showRecordFeedback ? (
+              <div
+                className="empty-state"
+                role={requestRecordsQuery.isError ? 'alert' : 'status'}
+              >
+                {requestRecordsQuery.isError ? (
+                  <CloudOff size={28} aria-hidden="true" />
+                ) : (
+                  <LoaderCircle
+                    size={28}
+                    className="animate-spin"
+                    aria-hidden="true"
+                  />
+                )}
+                <h2>
+                  {requestRecordsQuery.isError
+                    ? 'Vos dossiers ne sont pas disponibles'
+                    : 'Chargement de vos dossiers'}
+                </h2>
+                <p>
+                  {requestRecordsQuery.isError
+                    ? 'Impossible de lire les demandes pour le moment. Réessayez pour afficher leur état.'
+                    : 'Vos demandes et leurs informations vont apparaître ici.'}
+                </p>
+                {requestRecordsQuery.isError ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={requestRecordsQuery.isFetching}
+                    onClick={() => void requestRecordsQuery.refetch()}
+                  >
+                    {requestRecordsQuery.isFetching
+                      ? 'Chargement…'
+                      : 'Réessayer'}
+                  </Button>
+                ) : null}
+              </div>
+            ) : null}
             {activePage === 'home' ? (
               <HomePage
                 records={requestRecords}
@@ -560,9 +487,9 @@ function App() {
                 error={requestRecordsQuery.isError}
                 onRetry={() => void requestRecordsQuery.refetch()}
                 currentUser={currentUser}
-                onCreate={() => setActivePage('new-request')}
-                onHistory={() => setActivePage('history')}
-                onExpired={() => setActivePage('expired')}
+                onCreate={() => navigate('new-request')}
+                onHistory={() => navigate('history')}
+                onExpired={() => navigate('expired')}
                 onReuse={handleReuseRecord}
               />
             ) : null}
@@ -582,25 +509,13 @@ function App() {
                       Configurez d&apos;abord l&apos;utilisateur actif
                     </p>
                     <p>
-                      Ouvrez « Votre profil » dans la barre latérale et
-                      renseignez votre nom et votre adresse e-mail pour
+                      Renseignez votre nom et votre adresse e-mail pour
                       attribuer correctement les nouvelles demandes et
                       préremplir le contact principal.
                     </p>
                     <Button
                       type="button"
-                      onClick={() => {
-                        const profile =
-                          document.querySelector<HTMLDetailsElement>(
-                            '.profile-settings',
-                          )
-                        if (profile) {
-                          profile.open = true
-                          profile
-                            .querySelector<HTMLInputElement>('input')
-                            ?.focus()
-                        }
-                      }}
+                      onClick={() => setIsProfileOpen(true)}
                     >
                       Configurer mon profil{' '}
                       <ArrowRight size={16} className="ml-2" />
@@ -609,7 +524,7 @@ function App() {
                 </Card>
               )
             ) : null}
-            {activePage === 'history' ? (
+            {activePage === 'history' && !showRecordFeedback ? (
               <HistoryPage
                 records={requestRecords}
                 isLoading={requestRecordsQuery.isLoading}
@@ -620,7 +535,7 @@ function App() {
                 onReuseRecord={handleReuseRecord}
               />
             ) : null}
-            {activePage === 'expired' ? (
+            {activePage === 'expired' && !showRecordFeedback ? (
               <ExpiredPage
                 records={expiredRecords}
                 allRecords={requestRecords}
@@ -631,7 +546,7 @@ function App() {
                 onDismissReminder={handleDismissReminder}
               />
             ) : null}
-            {activePage === 'statistics' ? (
+            {activePage === 'statistics' && !showRecordFeedback ? (
               <StatisticsPage stats={requestStatistics} />
             ) : null}
             {activePage === 'contact' ? <ContactPage /> : null}
@@ -639,6 +554,14 @@ function App() {
           </section>
         </div>
       </div>
+      {isProfileOpen ? (
+        <CurrentUserDialog
+          draft={currentUserDraft}
+          onDraftChange={setCurrentUserDraft}
+          onSave={handleSaveCurrentUser}
+          onClose={() => setIsProfileOpen(false)}
+        />
+      ) : null}
       {isClosePromptOpen ? (
         <ConfirmDialog
           title="Quitter l’application ?"

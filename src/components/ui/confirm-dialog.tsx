@@ -18,8 +18,10 @@ export function ConfirmDialog({
   const id = useId()
   useEffect(() => {
     const previous = document.activeElement as HTMLElement | null
-    ref.current?.showModal()
+    const dialog = ref.current
+    dialog?.showModal()
     return () => {
+      dialog?.close?.()
       previous?.focus()
     }
   }, [])

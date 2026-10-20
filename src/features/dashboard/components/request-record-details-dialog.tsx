@@ -52,7 +52,7 @@ interface DetailItem {
 
 function valueOrFallback(
   value: string | null | undefined,
-  fallback = 'Non renseigne',
+  fallback = 'Non renseigné',
 ) {
   const normalized = value?.trim()
   return normalized ? normalized : fallback
@@ -67,7 +67,7 @@ function formatFormulaLabel(formula: BookingFormValues['formula']) {
     return 'Standard'
   }
 
-  return 'Non definie'
+  return 'Non définie'
 }
 
 function formatDateParts(day: string, month: string, year: string) {
@@ -143,7 +143,7 @@ function getOptionalServiceRows(values: BookingFormValues): DetailItem[] {
           ? 'Au centre'
           : optional.portrait === 'no_portrait'
             ? 'Photos personnelles'
-            : 'Non renseigne',
+            : 'Non renseigné',
     },
     {
       label: 'Assurance / relation',
@@ -152,7 +152,7 @@ function getOptionalServiceRows(values: BookingFormValues): DetailItem[] {
           ? 'Rappel demande'
           : optional.relation === 'no_relation'
             ? 'Non souhaite'
-            : 'Non renseigne',
+            : 'Non renseigné',
     },
     {
       label: 'Passeport',
@@ -161,7 +161,7 @@ function getOptionalServiceRows(values: BookingFormValues): DetailItem[] {
           ? 'Livraison'
           : optional.deliveryVisa === 'me_delivery'
             ? 'Retrait au centre'
-            : 'Non renseigne',
+            : 'Non renseigné',
     },
     {
       label: 'Suivi SMS',

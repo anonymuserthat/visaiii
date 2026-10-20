@@ -8,7 +8,8 @@ The application is named **ProVisa**. The desktop product/window title, browser 
 
 ## What it does
 
-- Recreates the 4-step booking flow in a desktop-first two-column UI.
+- Provides a light ProVisa workspace with saved requests, search and seven functional sections.
+- Organizes the booking flow into four compact stages with a focused form and on-demand review.
 - Supports both `capago_ANB` and `capago_CZL` from the same booking base path.
 - Loads centers, services, visa types, availability, and slots dynamically per selected center.
 - Solves reCAPTCHA v2 automatically through 2Captcha when a valid booking is submitted, then posts the booking with the returned token.
@@ -16,6 +17,10 @@ The application is named **ProVisa**. The desktop product/window title, browser 
 - Stores cookies and real HTTP session handling in the Tauri backend.
 - Saves local drafts, exports/imports JSON drafts, and writes an audit log.
 - Includes mock fixtures so the app is usable without live captures for every edge case.
+
+## UI redesign and verification
+
+See [the redesign handoff](docs/ui/README.md) for actual running screenshots, coverage, audit instructions and the remaining native verification limits.
 
 ## Runtime modes
 
@@ -60,7 +65,7 @@ Each solve uses your 2Captcha balance, including a solve followed by a rejected 
 1. Create a project in [Google Cloud](https://console.cloud.google.com/) and enable **Gmail API**.
 2. Configure **Google Auth Platform** branding, audience, and consent. For an external app in testing, add your Gmail address under test users and add the `https://www.googleapis.com/auth/gmail.readonly` scope under data access.
 3. Create an OAuth client of type **Desktop app / Application de bureau** and download its JSON credentials. A Web application client is not compatible with this desktop loopback flow.
-4. Open the software's **Gmail** page, import the JSON, click **Enregistrer l'application Google**, then **Se connecter avec Google**. Complete consent in your normal browser and return to the software. The local callback uses a temporary `127.0.0.1` port automatically.
+4. Open the software’s **Messagerie** page, import the JSON, click **Enregistrer l'application Google**, then **Se connecter avec Google**. Complete consent in your normal browser and return to the software. The local callback uses a temporary `127.0.0.1` port automatically.
 5. Search or refresh the inbox, browse pages of 20 messages, and select a message to read it. Standard Gmail search operators such as `from:`, `subject:`, and `is:unread` are supported within the inbox.
 
 Google's external testing mode usually expires refresh tokens after seven days for Gmail scopes, so reconnect when needed. Publishing an app for other users can require Google's verification for the Gmail read-only scope.

@@ -483,8 +483,8 @@ describe('BookingShell flow', () => {
 
     await screen.findByRole('heading', { name: /Voyageur 1/i })
     await waitFor(() => {
-      expect(screen.getByLabelText(/Type de visa demandé/i)).toHaveValue('')
-      expect(screen.getByLabelText(/Votre projet/i)).toHaveValue('')
+      expect(screen.getByLabelText(/Durée du séjour/i)).toHaveValue('')
+      expect(screen.getByLabelText(/Projet de voyage/i)).toHaveValue('')
       expect(screen.getByLabelText(/Motif principal du séjour/i)).toHaveValue(
         '',
       )
@@ -621,7 +621,7 @@ describe('BookingShell flow', () => {
       screen.queryByLabelText(/Jeton g-recaptcha-response/i),
     ).not.toBeInTheDocument()
     expect(
-      screen.getByText(/cliquez simplement sur 'Repasser la vérification'/i),
+      screen.getByText(/choisissez « Repasser la vérification »/i),
     ).toBeInTheDocument()
   })
 

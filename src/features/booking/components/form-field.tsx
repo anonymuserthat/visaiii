@@ -6,6 +6,7 @@ interface FormFieldProps {
   label: string
   htmlFor?: string
   hint?: string
+  required?: boolean
   error?: string
   children: ReactNode
 }
@@ -14,6 +15,7 @@ export function FormField({
   label,
   htmlFor,
   hint,
+  required = false,
   error,
   children,
 }: FormFieldProps) {
@@ -27,20 +29,28 @@ export function FormField({
     controls?.forEach((control, index) => {
       if (index === 0 && !control.id) control.id = fieldId
       control.setAttribute('aria-invalid', error ? 'true' : 'false')
-      if (error) control.setAttribute('aria-describedby', `${fieldId}-error`)
-      else if (control.getAttribute('aria-describedby') === `${fieldId}-error`)
-        control.removeAttribute('aria-describedby')
+      control.setAttribute('aria-required', String(required))
+      const describedBy = [
+        hint ? `${fieldId}-hint` : '',
+        error ? `${fieldId}-error` : '',
+      ]
+        .filter(Boolean)
+        .join(' ')
+      if (describedBy) control.setAttribute('aria-describedby', describedBy)
+      else control.removeAttribute('aria-describedby')
     })
-  }, [fieldId, error, children])
+  }, [fieldId, error, hint, required, children])
   return (
     <div ref={wrapper} className="space-y-1.5">
       <div className="flex items-center justify-between gap-3">
         <Label htmlFor={fieldId}>{label}</Label>
-        {hint ? (
-          <span className="text-xs text-muted-foreground">{hint}</span>
-        ) : null}
       </div>
       {children}
+      {hint ? (
+        <p id={`${fieldId}-hint`} className="text-xs text-muted-foreground">
+          {hint}
+        </p>
+      ) : null}
       {error ? (
         <p
           id={`${fieldId}-error`}

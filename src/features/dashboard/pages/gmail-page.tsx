@@ -417,7 +417,7 @@ export function GmailPage() {
                     <p className="text-xs text-muted-foreground">
                       Les identifiants sont chiffres pour votre utilisateur
                       Windows. En mode test Google, une reconnexion peut être
-                      necessaire apres 7 jours.
+                      nécessaire après 7 jours.
                     </p>
                     <div className="flex flex-wrap gap-2">
                       <Button type="submit">

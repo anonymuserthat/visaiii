@@ -162,7 +162,7 @@ export function Step4Appointment({
 
             {!availabilityRequested ? (
               <div className="rounded-md bg-slate-50 px-4 py-4 text-sm text-muted-foreground">
-                Complétez le type de visa, la variation et la categorie du
+                Complétez le type de visa, la variation et la catégorie du
                 demandeur pour charger les vraies disponibilités Capago.
               </div>
             ) : availabilityLoading ? (
@@ -256,7 +256,7 @@ export function Step4Appointment({
                             </div>
                             <Select
                               aria-label="Heure de rendez-vous"
-                              className="border-border bg-white"
+                              className="border-input bg-white"
                               value={selectedSlot?.label ?? field.value}
                               placeholder="Choisir un créneau"
                               options={slotOptions}
@@ -290,7 +290,7 @@ export function Step4Appointment({
                 </div>
                 <p className="mb-4 text-sm text-muted-foreground">
                   Aucun calendrier n&apos;est requis. Toutes les conditions
-                  ci-dessous doivent être acceptees avant la soumission.
+                  ci-dessous doivent être acceptées avant la soumission.
                 </p>
                 <div className="space-y-3">
                   {(availability?.queueConditionList ?? []).map((condition) => {
@@ -354,10 +354,10 @@ export function Step4Appointment({
                     className="h-4 w-4 animate-spin rounded-full border-2 border-blue-700 border-t-transparent"
                     aria-hidden="true"
                   />
-                  2Captcha resout automatiquement le CAPTCHA...
+                  2Captcha résout automatiquement le CAPTCHA...
                 </span>
               ) : captchaReady ? (
-                'CAPTCHA resolu automatiquement par 2Captcha. Prêt a envoyer.'
+                'Réponse reCAPTCHA reçue via 2Captcha. Prête à être envoyée.'
               ) : (
                 'Résolution automatique 2Captcha en attente.'
               )}
@@ -372,7 +372,7 @@ export function Step4Appointment({
                 <p className="text-sm text-muted-foreground">
                   {captchaReady
                     ? 'La vérification est terminée et le jeton est prêt pour la soumission.'
-                    : 'Ouvrez la fenetre intégrée pour finaliser le test. Si le serveur refuse le jeton ou expire, vous pourrez relancer la vérification.'}
+                    : 'Ouvrez la fenêtre intégrée pour finaliser le test. Si le serveur refuse le jeton ou expire, vous pourrez relancer la vérification.'}
                 </p>
               </div>
               {!captchaReady ? (
@@ -410,9 +410,9 @@ export function Step4Appointment({
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {captchaReady
-                      ? "Le jeton reCAPTCHA a ete capture par l'app. Si un probleme survient, cliquez simplement sur 'Repasser la vérification'."
+                      ? "La réponse reCAPTCHA a été reçue. En cas de problème, choisissez « Repasser la vérification »."
                       : automaticCaptcha
-                        ? 'La vérification sera effectuee par 2Captcha avant l’envoi.'
+                        ? 'La vérification sera effectuée par 2Captcha avant l’envoi.'
                         : 'Terminez la vérification dans la fenêtre officielle avant de soumettre la demande.'}
                   </p>
                   {captchaError ? (

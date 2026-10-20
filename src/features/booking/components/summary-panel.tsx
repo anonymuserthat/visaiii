@@ -331,7 +331,7 @@ export function SummaryPanel({
                       </div>
                     ) : (
                       <p className="text-sm text-muted-foreground">
-                        Les informations du voyageur apparaitront ici apres
+                        Les informations du voyageur apparaîtront ici après
                         validation.
                       </p>
                     )}
@@ -380,7 +380,7 @@ export function SummaryPanel({
               </div>
             ) : (
               <p className="text-sm text-muted-foreground">
-                Les choix de service apparaitront ici apres cette étape.
+                Les choix de service apparaîtront ici après cette étape.
               </p>
             )}
           </ReviewSection>
@@ -437,7 +437,7 @@ export function SummaryPanel({
 
         {!reachedStep1 ? (
           <div className="rounded-md bg-slate-50/70 px-3 py-4 text-sm text-muted-foreground">
-            Le resume commencera a se remplir apres validation de la premiere
+            Le récapitulatif se remplira après validation de la première
             étape.
           </div>
         ) : null}

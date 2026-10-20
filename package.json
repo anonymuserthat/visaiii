@@ -15,6 +15,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "verify:ui": "node scripts/verify-ui.cjs",
     "typecheck": "tsc -b"
   },
   "dependencies": {

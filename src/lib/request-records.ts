@@ -145,7 +145,7 @@ export function getRequestPrimaryLabel(record: StoredRequestRecord) {
 }
 
 export function getRequestSubmitterLabel(record: StoredRequestRecord) {
-  return normalizeSubmitterName(record.submitterName) || 'Utilisateur non renseigne'
+  return normalizeSubmitterName(record.submitterName) || 'Utilisateur non renseigné'
 }
 
 export function formatRequestAppointmentSummary(record: StoredRequestRecord) {
@@ -243,7 +243,7 @@ export function getRequestStatistics(
         ? 'Premium'
         : record.formula === 'standard'
           ? 'Standard'
-          : 'Non defini'
+          : 'Non défini'
 
     if (submittedDayKey === todayKey) {
       todayCount += 1

@@ -21,7 +21,7 @@
     --destructive: 0 67% 43%;
     --destructive-foreground: 0 0% 100%;
     --border: 240 18% 91%;
-    --input: 240 16% 84%;
+    --input: 240 8% 56%;
     --ring: 245 79% 63%;
     --radius: 0.625rem;
     font-family: 'Segoe UI', system-ui, sans-serif;
@@ -257,38 +257,28 @@
   .skip-link:focus {
     top: 10px;
   }
-  .profile-settings > summary {
+  .profile-trigger {
     display: flex;
     align-items: center;
     gap: 8px;
-    list-style: none;
+    width: 100%;
     padding: 12px 8px;
-    cursor: pointer;
     color: #4d4a5d;
     font-size: 12px;
     border-radius: 8px;
+    text-align: left;
   }
-  .profile-settings > summary:hover {
+  .profile-trigger:hover {
     background: #eeeaf7;
   }
-  .profile-settings > summary > span {
+  .profile-trigger > span {
+    min-width: 0;
+    overflow-wrap: anywhere;
+  }
+  .profile-trigger > small {
     font-size: 10px;
     margin-left: auto;
     color: #716b81;
-  }
-  .profile-settings > .surface-section {
-    position: fixed;
-    left: 224px;
-    bottom: 28px;
-    width: 340px;
-    max-height: calc(100vh - 56px);
-    overflow: auto;
-    z-index: 40;
-    border: 1px solid #e7e3ef;
-    box-shadow: 0 12px 40px #20144014;
-    padding: 16px;
-    border-radius: 12px;
-    background: white;
   }
   .surface-section {
     border-radius: 12px;
@@ -325,11 +315,26 @@
   .workflow-stepper ol {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 8px;
+    gap: 16px;
   }
   .workflow-stepper li {
     min-width: 0;
+    position: relative;
   }
+  .workflow-stepper li:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    height: 1px;
+    background: #e9e9ef;
+    left: calc(100% - 12px);
+    right: -12px;
+    top: 50%;
+  }
+  .workflow-stepper li[data-complete='true'] .step-number {
+    background: #f0edff;
+    color: #584bc7;
+  }
+
   .workflow-stepper button {
     width: 100%;
     display: flex;
@@ -337,21 +342,15 @@
     text-align: left;
     gap: 9px;
     color: #6c6678;
-    padding: 10px 8px;
-    border-radius: 10px;
+    padding: 6px 8px;
+    border-radius: 8px;
   }
   .workflow-stepper button[aria-current] {
-    background: #f3f0ff;
+    background: transparent;
     color: #584bc7;
   }
   .workflow-stepper button:not(:disabled):hover {
     background: #f7f5fc;
-  }
-  .workflow-stepper small {
-    display: block;
-    font-size: 10px;
-    margin-top: 3px;
-    font-weight: 400;
   }
   .workflow-stepper button > span:last-child {
     font-size: 12px;
@@ -615,10 +614,21 @@
     padding-top: 8px;
   }
   .traveller-visa-section {
-    padding: 20px;
-    background: #faf9fd;
-    border-radius: 12px;
+    padding-top: 12px;
   }
+  .visa-eligibility-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    color: #79572a;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+  .visa-eligibility-note svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
   .traveller-field-section p.text-sm {
     font-size: 12px;
   }
@@ -926,6 +936,58 @@
   .detail-section > div + div,
   .review-section > div + div {
     margin-top: 12px;
+  }
+  .profile-dialog {
+    width: min(440px, calc(100vw - 32px));
+    max-height: calc(100dvh - 48px);
+    overflow: auto;
+    border: 1px solid #e9e9ef;
+    border-radius: 12px;
+    padding: 24px;
+    background: white;
+    color: #20212a;
+    box-shadow: 0 16px 64px #20212a14;
+  }
+  .profile-dialog::backdrop {
+    background: #20212a40;
+  }
+  .profile-dialog-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+  .profile-dialog-icon {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    background: #f0edff;
+    color: #584bc7;
+    border-radius: 10px;
+  }
+  .profile-dialog h2 {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.3px;
+  }
+  .profile-dialog h2 + p {
+    font-size: 13px;
+    color: #737584;
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  .profile-dialog-fields {
+    display: grid;
+    gap: 16px;
+    margin: 24px 0;
+  }
+  .profile-dialog label {
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .profile-dialog .dialog-actions {
+    margin-top: 24px;
   }
   .confirm-dialog {
     width: min(460px, calc(100vw - 32px));
@@ -1238,12 +1300,6 @@
   }
   .workspace-utility > span {
     display: none;
-  }
-  .profile-settings > .surface-section {
-    left: 16px;
-    right: 16px;
-    width: auto;
-    max-width: 400px;
   }
   .workflow-stepper small {
     display: none;

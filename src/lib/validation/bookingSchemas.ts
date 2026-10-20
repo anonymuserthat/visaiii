@@ -55,7 +55,11 @@ const bookingSchemaBase = z.object({
   nbTravellers: z.number().int(),
   cgv: z.boolean(),
   area: z.string(),
-  formula: z.union([z.literal('standard'), z.literal('premium'), z.literal('')]),
+  formula: z.union([
+    z.literal('standard'),
+    z.literal('premium'),
+    z.literal(''),
+  ]),
   travellers: z.array(travellerSchema),
   optionalServices: z.object({
     portrait: z.union([
@@ -194,22 +198,31 @@ export function createBookingSchema(context: BookingSchemaContext) {
       addIssue(
         ctx,
         ['nbTravellers'],
-        `Le nombre de voyageurs doit etre compris entre 1 et ${maxTravellers}.`,
+        `Le nombre de voyageurs doit être compris entre 1 et ${maxTravellers}.`,
       )
     }
 
     if (!values.cgv) {
-      addIssue(ctx, ['cgv'], 'Les conditions generales doivent etre acceptees.')
+      addIssue(
+        ctx,
+        ['cgv'],
+        'Les conditions générales doivent être acceptées.',
+      )
     }
 
-    validateRequired(ctx, values.area, ['area'], 'Selectionnez un centre.')
-    validateRequired(ctx, values.formula, ['formula'], 'Selectionnez une formule.')
+    validateRequired(ctx, values.area, ['area'], 'Sélectionnez un centre.')
+    validateRequired(
+      ctx,
+      values.formula,
+      ['formula'],
+      'Sélectionnez une formule.',
+    )
 
     if (values.travellers.length !== values.nbTravellers) {
       addIssue(
         ctx,
         ['travellers'],
-        'Le nombre de fiches voyageurs doit correspondre au total selectionne.',
+        'Le nombre de fiches voyageurs doit correspondre au total sélectionné.',
       )
     }
 
@@ -217,37 +230,39 @@ export function createBookingSchema(context: BookingSchemaContext) {
       const prefix = ['travellers', index] as const
       const requiredFields: Array<
         [
-          | 'title'
-          | 'lastname'
-          | 'firstname'
-          | 'dayBirth'
-          | 'monthBirth'
-          | 'yearBirth'
-          | 'passportNumber'
-          | 'dayDepartureDate'
-          | 'monthDepartureDate'
-          | 'yearDepartureDate'
-          | 'visaStayDuration'
-          | 'travelPurpose'
-          | 'typeVisa'
-          | 'precision1'
-          | 'precision2',
+          (
+            | 'title'
+            | 'lastname'
+            | 'firstname'
+            | 'dayBirth'
+            | 'monthBirth'
+            | 'yearBirth'
+            | 'passportNumber'
+            | 'dayDepartureDate'
+            | 'monthDepartureDate'
+            | 'yearDepartureDate'
+            | 'visaStayDuration'
+            | 'travelPurpose'
+            | 'typeVisa'
+            | 'precision1'
+            | 'precision2'
+          ),
           string,
         ]
       > = [
         ['title', 'Le titre est requis.'],
         ['lastname', 'Le nom est requis.'],
-        ['firstname', 'Le prenom est requis.'],
+        ['firstname', 'Le prénom est requis.'],
         ['dayBirth', 'Le jour de naissance est requis.'],
         ['monthBirth', 'Le mois de naissance est requis.'],
-        ['yearBirth', "L'annee de naissance est requise."],
-        ['passportNumber', 'Le numero de passeport est requis.'],
-        ['dayDepartureDate', 'Le jour de depart est requis.'],
-        ['monthDepartureDate', 'Le mois de depart est requis.'],
-        ['yearDepartureDate', "L'annee de depart est requise."],
-        ['visaStayDuration', 'Le type de visa demande est requis.'],
+        ['yearBirth', "L'année de naissance est requise."],
+        ['passportNumber', 'Le numéro de passeport est requis.'],
+        ['dayDepartureDate', 'Le jour de départ est requis.'],
+        ['monthDepartureDate', 'Le mois de départ est requis.'],
+        ['yearDepartureDate', "L'année de départ est requise."],
+        ['visaStayDuration', 'La durée du séjour est requise.'],
         ['travelPurpose', 'Le projet de voyage est requis.'],
-        ['typeVisa', 'Le motif principal du sejour est requis.'],
+        ['typeVisa', 'Le motif principal du séjour est requis.'],
         ['precision1', 'La variation de visa est requise.'],
         ['precision2', 'La situation du demandeur est requise.'],
       ]
@@ -261,7 +276,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
           ctx,
           traveller.phone,
           [...prefix, 'phone'],
-          'Le telephone est requis pour le voyageur principal.',
+          'Le téléphone est requis pour le voyageur principal.',
         )
         validateRequired(
           ctx,
@@ -281,7 +296,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
         addIssue(
           ctx,
           [...prefix, 'phone'],
-          'Le format du telephone ne correspond pas au format attendu.',
+          'Le format du téléphone ne correspond pas au format attendu.',
         )
       }
 
@@ -318,7 +333,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
         addIssue(
           ctx,
           [...prefix, 'passportNumber'],
-          'Le passeport doit etre alphanumerique.',
+          'Le passeport doit être alphanumérique.',
         )
       }
 
@@ -352,7 +367,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
         addIssue(
           ctx,
           [...prefix, 'dayDepartureDate'],
-          'La date de depart est invalide.',
+          'La date de départ est invalide.',
         )
       }
     })
@@ -361,7 +376,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
       addIssue(
         ctx,
         ['optionalServices', 'portrait'],
-        'Selectionnez une option photo.',
+        'Sélectionnez une option photo.',
       )
     }
 
@@ -369,7 +384,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
       addIssue(
         ctx,
         ['optionalServices', 'relation'],
-        "Selectionnez l'option d'assurance.",
+        "Sélectionnez l'option d'assurance.",
       )
     }
 
@@ -377,7 +392,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
       addIssue(
         ctx,
         ['optionalServices', 'deliveryVisa'],
-        'Selectionnez le mode de livraison.',
+        'Sélectionnez le mode de livraison.',
       )
     }
 
@@ -386,7 +401,7 @@ export function createBookingSchema(context: BookingSchemaContext) {
         [
           ['title', 'Le titre du contact de livraison est requis.'],
           ['lastname', 'Le nom du contact de livraison est requis.'],
-          ['firstname', 'Le prenom du contact de livraison est requis.'],
+          ['firstname', 'Le prénom du contact de livraison est requis.'],
           ['address', "L'adresse de livraison est requise."],
           ['zip', 'Le code postal de livraison est requis.'],
           ['city', 'La ville de livraison est requise.'],
@@ -401,19 +416,22 @@ export function createBookingSchema(context: BookingSchemaContext) {
       )
     }
 
-    if (values.optionalServices.followSms && !values.optionalServices.smsMobile) {
+    if (
+      values.optionalServices.followSms &&
+      !values.optionalServices.smsMobile
+    ) {
       addIssue(
         ctx,
         ['optionalServices', 'smsMobile'],
-        'Le numero SMS est requis.',
+        'Le numéro SMS est requis.',
       )
     }
 
     if (values.optionalServices.invoiceEmail) {
       ;(
         [
-          ['society', 'La societe de facturation est requise.'],
-          ['tva', 'Le numero de TVA est requis.'],
+          ['society', 'La société de facturation est requise.'],
+          ['tva', 'Le numéro de TVA est requis.'],
           ['address', "L'adresse de facturation est requise."],
           ['zip', 'Le code postal de facturation est requis.'],
           ['city', 'La ville de facturation est requise.'],
@@ -433,13 +451,13 @@ export function createBookingSchema(context: BookingSchemaContext) {
         ctx,
         values.appointment.date,
         ['appointment', 'date'],
-        'Selectionnez une date.',
+        'Sélectionnez une date.',
       )
       validateRequired(
         ctx,
         values.appointment.time,
         ['appointment', 'time'],
-        'Selectionnez un horaire.',
+        'Sélectionnez un horaire.',
       )
     } else {
       Object.entries(values.appointment.queueConditions).forEach(
@@ -448,19 +466,20 @@ export function createBookingSchema(context: BookingSchemaContext) {
             addIssue(
               ctx,
               ['appointment', 'queueConditions', condition],
-              'Toutes les conditions de file doivent etre acceptees.',
+              'Toutes les conditions de file doivent être acceptées.',
             )
           }
         },
       )
     }
 
-    if (context.captchaRequired !== false) validateRequired(
-      ctx,
-      values.appointment.captchaToken,
-      ['appointment', 'captchaToken'],
-      'La verification reCAPTCHA est requise.',
-    )
+    if (context.captchaRequired !== false)
+      validateRequired(
+        ctx,
+        values.appointment.captchaToken,
+        ['appointment', 'captchaToken'],
+        'La vérification reCAPTCHA est requise.',
+      )
   })
 }
 

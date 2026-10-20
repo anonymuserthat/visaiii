@@ -23,7 +23,7 @@ export function SubmissionSuccess({
       <CardContent className="space-y-4">
         <p className="text-sm text-emerald-800">
           Le serveur a repondu avec un statut `201 Created`. Vous pouvez ouvrir
-          la page de confirmation si un lien de redirection a ete fourni.
+          la page de confirmation si un lien de redirection a été fourni.
         </p>
         {location ? (
           <Button type="button" variant="secondary" onClick={onOpenLocation}>

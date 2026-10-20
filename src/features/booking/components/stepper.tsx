@@ -17,7 +17,7 @@ export function Stepper({
           const id = (index + 1) as 1 | 2 | 3 | 4
           const complete = completedSteps.includes(id)
           return (
-            <li key={title}>
+            <li key={title} data-complete={complete && id !== currentStep}>
               <button
                 type="button"
                 aria-current={id === currentStep ? 'step' : undefined}
@@ -29,7 +29,7 @@ export function Stepper({
                 </span>
                 <span>
                   {title}
-                  <small>
+                  <small className="sr-only">
                     {id === currentStep
                       ? 'En cours'
                       : complete
