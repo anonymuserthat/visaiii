@@ -22,8 +22,8 @@ fn load_runtime_environment(resource_dir: Option<PathBuf>) {
     let mut candidates = Vec::<PathBuf>::new();
 
     if let Some(directory) = resource_dir {
-      candidates.push(directory.join(".env"));
-      candidates.push(directory.join("_up_").join(".env"));
+        candidates.push(directory.join(".env"));
+        candidates.push(directory.join("_up_").join(".env"));
     }
 
     if let Ok(executable) = env::current_exe() {

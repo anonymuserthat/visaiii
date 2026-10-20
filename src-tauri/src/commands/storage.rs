@@ -16,8 +16,8 @@ use serde_json::Value;
 use tauri::{AppHandle, Manager};
 
 const REQUESTS_FILE_NAME: &str = "requests.json";
-const DATABASE_ENV_FILE_NAME: &str = "runtime.env";
 const CURRENT_USER_FILE_NAME: &str = "current-user.json";
+const SHARD_COUNT: usize = 100;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -103,106 +103,67 @@ fn normalize_database_url(value: String) -> Option<String> {
     }
 }
 
-fn read_database_url_from_env_file(path: &Path) -> Option<String> {
+fn read_database_urls_from_env_file(path: &Path) -> Vec<(usize, String)> {
     if !path.exists() {
-        return None;
+        return Vec::new();
     }
 
-    let iter = dotenvy::from_path_iter(path).ok()?;
-    for entry in iter.flatten() {
-        if entry.0 == "DATABASE_URL" {
-            return normalize_database_url(entry.1);
-        }
-    }
+    let Ok(iter) = dotenvy::from_path_iter(path) else {
+        return Vec::new();
+    };
 
-    None
+    iter.flatten()
+        .filter_map(|(key, value)| {
+            let index = key
+                .strip_prefix("SHARD_")
+                .and_then(|suffix| suffix.strip_suffix("_DATABASE_URL"))
+                .and_then(|number| number.parse::<usize>().ok())
+                .filter(|index| (1..=SHARD_COUNT).contains(index))?;
+            Some((index, normalize_database_url(value)?))
+        })
+        .collect()
 }
 
-fn push_env_candidate(candidates: &mut Vec<PathBuf>, path: PathBuf) {
-    if !candidates.contains(&path) {
-        candidates.push(path);
-    }
-}
-
-fn database_env_candidates(app: Option<&AppHandle>) -> Vec<PathBuf> {
-    let mut candidates = Vec::new();
-
-    if let Some(app) = app {
-      if let Ok(resource_dir) = app.path().resource_dir() {
-        push_env_candidate(&mut candidates, resource_dir.join(".env"));
-          push_env_candidate(&mut candidates, resource_dir.join("_up_").join(".env"));
-      }
-    }
-
-    // A saved per-PC setting takes priority over build/development settings.
-    if let Some(app) = app {
-        if let Ok(data_path) = app_data_path(app) {
-            push_env_candidate(&mut candidates, data_path.join(DATABASE_ENV_FILE_NAME));
-        }
-    }
-
-    // Look in explicitly expected locations only; do not scan parent directories
-    // or accidentally read an unrelated project's .env file.
-    if let Ok(current_exe) = env::current_exe() {
-        if let Some(exe_dir) = current_exe.parent() {
-            push_env_candidate(&mut candidates, exe_dir.join(DATABASE_ENV_FILE_NAME));
-            push_env_candidate(&mut candidates, exe_dir.join(".env"));
-            push_env_candidate(&mut candidates, exe_dir.join("..").join(".env"));
-            push_env_candidate(
-              &mut candidates,
-              exe_dir.join("..").join("..").join(".env"),
-            );
-            push_env_candidate(
-              &mut candidates,
-              exe_dir
-                .join("..")
-                .join("..")
-                .join("..")
-                .join(".env"),
-            );
-        }
-    }
-    if let Ok(current_dir) = env::current_dir() {
-        push_env_candidate(&mut candidates, current_dir.join(".env"));
-    }
-
-    candidates
-}
-
-fn resolve_database_url(app: Option<&AppHandle>) -> Option<String> {
-    // An explicitly provided environment variable is the deployment-level
-    // source of truth. This prevents an old per-PC runtime.env from masking the
-    // current Neon connection during development or after an upgrade.
-    if let Some(url) = env::var("DATABASE_URL")
-        .ok()
-        .and_then(normalize_database_url)
-    {
-        return Some(url);
-    }
-
-    if let Some(app) = app {
-        if let Ok(data_path) = app_data_path(app) {
-            if let Some(url) =
-                read_database_url_from_env_file(&data_path.join(DATABASE_ENV_FILE_NAME))
-            {
-                return Some(url);
+fn configured_database_shards(app: Option<&AppHandle>) -> Vec<(usize, String)> {
+    let mut shards = Vec::new();
+    for index in 1..=SHARD_COUNT {
+        let key = format!("SHARD_{index:03}_DATABASE_URL");
+        if let Ok(value) = env::var(&key) {
+            if let Some(url) = normalize_database_url(value) {
+                shards.push((index, url));
             }
         }
     }
 
-    for candidate in database_env_candidates(app) {
-        if let Some(url) = read_database_url_from_env_file(&candidate) {
-            return Some(url);
+    let mut candidates = Vec::new();
+    if let Some(app) = app {
+        if let Ok(resource_dir) = app.path().resource_dir() {
+            candidates.push(resource_dir.join(".env"));
+            candidates.push(resource_dir.join("_up_").join(".env"));
+        }
+    }
+    if let Ok(current_exe) = env::current_exe() {
+        if let Some(exe_dir) = current_exe.parent() {
+            candidates.push(exe_dir.join(".env"));
+            candidates.push(exe_dir.join("..").join(".env"));
+            candidates.push(exe_dir.join("..").join("..").join(".env"));
+            candidates.push(exe_dir.join("..").join("..").join("..").join(".env"));
+        }
+    }
+    if let Ok(current_dir) = env::current_dir() {
+        candidates.push(current_dir.join(".env"));
+    }
+
+    for candidate in candidates {
+        for (index, url) in read_database_urls_from_env_file(&candidate) {
+            if !shards.iter().any(|(known_index, _)| *known_index == index) {
+                shards.push((index, url));
+            }
         }
     }
 
-    None
-}
-
-fn save_database_url(app: &AppHandle, url: &str) -> Result<(), String> {
-    let path = app_data_path(app)?.join(DATABASE_ENV_FILE_NAME);
-    let escaped = url.replace('\\', "\\\\").replace('"', "\\\"");
-    fs::write(path, format!("DATABASE_URL=\"{escaped}\"\n")).map_err(|error| error.to_string())
+    shards.sort_by_key(|(index, _)| *index);
+    shards
 }
 
 fn format_postgres_error(error: postgres::Error) -> String {
@@ -239,6 +200,22 @@ fn connect_postgres(url: &str) -> Result<Client, String> {
 
 fn sort_request_records(records: &mut [StoredRequestRecord]) {
     records.sort_by(|left, right| right.submitted_at.cmp(&left.submitted_at));
+}
+
+fn shard_for_record<'a>(
+    record_id: &str,
+    shards: &'a [(usize, String)],
+) -> Option<(usize, &'a str)> {
+    if shards.is_empty() {
+        return None;
+    }
+
+    let hash = record_id.bytes().fold(2_166_136_261_u32, |hash, byte| {
+        (hash ^ u32::from(byte)).wrapping_mul(16_777_619)
+    });
+    let position = (hash as usize) % shards.len();
+    let (index, url) = &shards[position];
+    Some((*index, url.as_str()))
 }
 
 fn read_request_records_file(app: &AppHandle) -> Result<Vec<StoredRequestRecord>, String> {
@@ -564,9 +541,10 @@ pub async fn save_request_record(
     record: StoredRequestRecord,
 ) -> Result<StoredRequestRecord, String> {
     let mut next_record = record;
-    let database_url = resolve_database_url(Some(&app));
+    let database_shards = configured_database_shards(Some(&app));
 
-    if let Some(url) = database_url {
+    if let Some((shard_index, url)) = shard_for_record(&next_record.id, &database_shards) {
+        let url = url.to_owned();
         let record_for_db = next_record.clone();
         match tauri::async_runtime::spawn_blocking(move || {
             sync_request_record_to_postgres(&record_for_db, &url)
@@ -576,7 +554,8 @@ pub async fn save_request_record(
         {
             Ok(()) => {
                 next_record.database_sync_status = "database_synced".into();
-                next_record.database_sync_message = Some("Synchronise avec Postgres.".into());
+                next_record.database_sync_message =
+                    Some(format!("Synchronise avec le shard {shard_index:03}."));
             }
             Err(error) => {
                 next_record.database_sync_status = "database_failed".into();
@@ -586,7 +565,7 @@ pub async fn save_request_record(
     } else {
         next_record.database_sync_status = "local_only".into();
         next_record.database_sync_message = Some(
-            "DATABASE_URL introuvable. Sauvegarde locale utilisee comme cache de secours.".into(),
+            "Aucun shard configure. Sauvegarde locale utilisee comme cache de secours.".into(),
         );
     }
 
@@ -602,11 +581,14 @@ pub async fn save_request_record(
 // Merge from the database first. Never send an old cached "database_synced"
 // record back as an UPSERT: that would overwrite newer edits from another PC.
 fn synchronize_request_records(
-    url: &str,
+    shards: &[(usize, String)],
     local_records: Vec<StoredRequestRecord>,
 ) -> Result<Vec<StoredRequestRecord>, String> {
-    let mut client = connect_postgres(url)?;
-    let mut remote_records = load_request_records_from_client(&mut client)?;
+    let mut remote_records = Vec::new();
+    for (_, url) in shards {
+        let mut client = connect_postgres(url)?;
+        remote_records.extend(load_request_records_from_client(&mut client)?);
+    }
     let remote_ids: std::collections::HashSet<String> = remote_records
         .iter()
         .map(|record| record.id.clone())
@@ -624,6 +606,9 @@ fn synchronize_request_records(
                 {
                     if record.dismissed_reminder_at != remote.dismissed_reminder_at {
                         if let Some(dismissed_at) = record.dismissed_reminder_at.as_ref() {
+                            let (_, url) = shard_for_record(&record.id, shards)
+                                .ok_or("Aucun shard configure.")?;
+                            let mut client = connect_postgres(url)?;
                             match client.execute(
                 "UPDATE visa_request_records SET dismissed_reminder_at = $1 WHERE id = $2",
                 &[dismissed_at, &record.id],
@@ -650,6 +635,8 @@ fn synchronize_request_records(
         }
 
         // A record absent from the shared database may have been created offline.
+        let (_, url) = shard_for_record(&record.id, shards).ok_or("Aucun shard configure.")?;
+        let mut client = connect_postgres(url)?;
         match upsert_request_record(&mut client, &record) {
             Ok(()) => {
                 record.database_sync_status = "database_synced".into();
@@ -671,12 +658,13 @@ fn synchronize_request_records(
 #[tauri::command]
 pub async fn list_request_records(app: AppHandle) -> Result<Vec<StoredRequestRecord>, String> {
     let local_records = read_request_records_file(&app)?;
-    let Some(url) = resolve_database_url(Some(&app)) else {
+    let database_shards = configured_database_shards(Some(&app));
+    if database_shards.is_empty() {
         return Ok(local_records);
-    };
+    }
 
     match tauri::async_runtime::spawn_blocking(move || {
-        synchronize_request_records(&url, local_records.clone())
+        synchronize_request_records(&database_shards, local_records.clone())
     })
     .await
     .map_err(|error| error.to_string())?
@@ -709,21 +697,28 @@ pub async fn get_database_status(app: AppHandle) -> Result<DatabaseStatus, Strin
         .iter()
         .filter(|record| record.database_sync_status != "database_synced")
         .count();
-    let Some(url) = resolve_database_url(Some(&app)) else {
+    let database_shards = configured_database_shards(Some(&app));
+    if database_shards.is_empty() {
         return Ok(DatabaseStatus {
             configured: false,
             connected: false,
             remote_count: None,
             local_count,
             pending_count,
-            message: "Aucune connexion configuree sur cet ordinateur. Configurez la base partagee."
-                .into(),
+            message: "Aucun shard configure sur cet ordinateur.".into(),
         });
-    };
+    }
 
-    let check = tauri::async_runtime::spawn_blocking(move || query_database_count(&url))
-        .await
-        .map_err(|error| error.to_string())?;
+    let configured_shard_count = database_shards.len();
+    let check = tauri::async_runtime::spawn_blocking(move || {
+        let mut total = 0_i64;
+        for (_, url) in database_shards {
+            total += query_database_count(&url)?;
+        }
+        Ok::<i64, String>(total)
+    })
+    .await
+    .map_err(|error| error.to_string())?;
     Ok(match check {
         Ok(count) => DatabaseStatus {
             configured: true,
@@ -731,7 +726,7 @@ pub async fn get_database_status(app: AppHandle) -> Result<DatabaseStatus, Strin
             remote_count: Some(count),
             local_count,
             pending_count,
-            message: "Connecte a la base partagee.".into(),
+            message: format!("Connecte aux {configured_shard_count} shards."),
         },
         Err(error) => DatabaseStatus {
             configured: true,
@@ -746,21 +741,15 @@ pub async fn get_database_status(app: AppHandle) -> Result<DatabaseStatus, Strin
 
 #[tauri::command]
 pub async fn configure_database(app: AppHandle, url: String) -> Result<DatabaseStatus, String> {
-    let url = normalize_database_url(url).ok_or("URL de connexion obligatoire.")?;
-    let test_url = url.clone();
-    tauri::async_runtime::spawn_blocking(move || query_database_count(&test_url))
-        .await
-        .map_err(|error| error.to_string())??;
-    save_database_url(&app, &url)?;
-    get_database_status(app).await
+    let _ = (app, url);
+    Err(
+        "La configuration utilise SHARD_001_DATABASE_URL a SHARD_100_DATABASE_URL dans .env."
+            .into(),
+    )
 }
 
 #[tauri::command]
 pub async fn clear_database_configuration(app: AppHandle) -> Result<DatabaseStatus, String> {
-    let path = app_data_path(&app)?.join(DATABASE_ENV_FILE_NAME);
-    if path.exists() {
-        fs::remove_file(path).map_err(|error| error.to_string())?;
-    }
     get_database_status(app).await
 }
 
@@ -778,7 +767,9 @@ pub async fn dismiss_request_reminder(
     // Save before attempting network access; do not lose the action when offline.
     write_request_records_file(&app, &records)?;
 
-    if let Some(url) = resolve_database_url(Some(&app)) {
+    let database_shards = configured_database_shards(Some(&app));
+    if let Some((_, url)) = shard_for_record(&record_id, &database_shards) {
+        let url = url.to_owned();
         let record_id_for_db = record_id.clone();
         let result = tauri::async_runtime::spawn_blocking(move || {
             let mut client = connect_postgres(&url)?;
@@ -833,5 +824,4 @@ mod tests {
             Some("postgresql://user:pass@example.com:26257/defaultdb?sslmode=require")
         );
     }
-
 }

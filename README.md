@@ -32,11 +32,13 @@ VITE_BOOKING_BASE_URL=https://visa-fr-dz.capago.eu/rendezvous_annaba
 VITE_MOCK_MODE=true
 VITE_DEFAULT_LOCALE=fr
 TWOCAPTCHA_API_KEY=
+SHARD_001_DATABASE_URL=postgresql://user:password@host.example/neondb?sslmode=require
+SHARD_100_DATABASE_URL=postgresql://user:password@host.example/neondb?sslmode=require
 DATABASE_URL=postgresql://user:password@ep-example.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require
 ```
 
 Default base URL already points to the shared Annaba route, with center switching driven by `area` / `capago_center_id`.
-`DATABASE_URL` is read by the Tauri backend at runtime and takes priority over a previously saved per-PC `runtime.env`. Keep it in a local, uncommitted `.env`; it is never bundled into the frontend.
+The Tauri backend reads `SHARD_001_DATABASE_URL` through `SHARD_100_DATABASE_URL` at runtime. Records are assigned deterministically to the configured shard pool, while history reads merge records from all configured shards. Keep these values in a local, uncommitted `.env`; they are never bundled into the frontend.
 
 ## Automatic CAPTCHA with 2Captcha
 
